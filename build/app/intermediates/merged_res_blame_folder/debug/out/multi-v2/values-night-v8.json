@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "/home/lukasz/StudioProjects/med-app-mobile/med_app_mobile/build/app/intermediates/incremental/mergeDebugResources/merged.dir/values-night-v8/values-night-v8.xml",
+            "outputFile": "/home/lukasz/StudioProjects/med-app-mobile/build/app/intermediates/incremental/mergeDebugResources/merged.dir/values-night-v8/values-night-v8.xml",
             "map": [
                 {
-                    "source": "/home/lukasz/StudioProjects/med-app-mobile/med_app_mobile/android/app/src/main/res/values-night/styles.xml",
+                    "source": "/home/lukasz/StudioProjects/med-app-mobile/android/app/src/main/res/values-night/styles.xml",
                     "from": {
                         "startLines": "3,14",
                         "startColumns": "4,4",
