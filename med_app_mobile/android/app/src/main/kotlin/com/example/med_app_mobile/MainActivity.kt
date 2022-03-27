@@ -1,4 +1,4 @@
-package com.example.med_app_mobile
+package com.ziwg.med_app_mobile.pwr
 
 import io.flutter.embedding.android.FlutterActivity
 
