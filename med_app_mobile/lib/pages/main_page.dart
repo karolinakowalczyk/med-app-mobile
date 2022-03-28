@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 // Główna strona - do zrobienia na później
 class MainPage extends StatefulWidget {

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:med_app_mobile/helpers/theme_helper.dart';
 
 import 'main_page.dart';
@@ -136,12 +135,12 @@ class _RegistrationPageState extends State<RegistrationPage> with RestorationMix
                             );
                           },
                           validator: (value) {
-                            // Tutaj IF który sprawdzi czy Terms&Cond są zaznaczone
+                            //tutaj IF który sprawdzi czy Terms&Cond są zaznaczone
                           },
                         ),
                         const SizedBox(width: 20),
                         Container(
-                          // To jest przycisk tworzący konto, podpiać bezę danych
+                          // To jest przycisk tworzący konto
                           decoration: ThemeHelper().buttonBoxDecoration(context),
                           child: ElevatedButton(
                             style: ThemeHelper().buttonStyle(),
