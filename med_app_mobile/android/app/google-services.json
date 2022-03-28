@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "728472434992",
+    "project_id": "med-app-e3228",
+    "storage_bucket": "med-app-e3228.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:728472434992:android:30f1626f382fbe3f64b0f5",
+        "android_client_info": {
+          "package_name": "com.ziwg.med_app_mobile.pwr"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "728472434992-gju49oir8hs5iqeeqkinfrlg8m10cvqd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ziwg.med_app_mobile.pwr",
+            "certificate_hash": "827e87750f6e4c9a6c149190a9be2ce05bd996e0"
+          }
+        },
+        {
+          "client_id": "728472434992-7m22aji58ocbnsdf6vc7709qg9cs5l4u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCTJ_kDJY1CRFW0UMN1RDUIL2k--zbDsPc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "728472434992-7m22aji58ocbnsdf6vc7709qg9cs5l4u.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
