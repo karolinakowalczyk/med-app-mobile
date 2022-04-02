@@ -1,11 +1,11 @@
 class UserPatient {
-  final String id;
+  String? id;
   final String name;
   final String email;
   final String phone;
 
-  const UserPatient({
-    required this.id,
+  UserPatient({
+    this.id,
     required this.name,
     required this.email,
     required this.phone,
@@ -28,7 +28,8 @@ class UserPatient {
     };
   }
 
-  void printUserName() {
-    print(name);
+  @override
+  String toString() {
+    return '{ id: $id, name: $name, email: $email, phone: $phone }';
   }
 }

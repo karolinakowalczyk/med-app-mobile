@@ -5,18 +5,26 @@ import 'package:hexcolor/hexcolor.dart';
 
 // W tej klasie są style okien inputu i przycisków, logika nie jest potrzebna
 class ThemeHelper {
-
-  InputDecoration textInputDecoration([String labelText = "", String hintText = ""]) {
+  InputDecoration textInputDecoration(
+      [String labelText = "", String hintText = ""]) {
     return InputDecoration(
       labelText: labelText,
       hintText: hintText,
       fillColor: Colors.white,
       filled: true,
       contentPadding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: const BorderSide(color: Colors.blue)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: Colors.blue.shade300)),
-      errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: BorderSide(color: Colors.red.shade300, width: 2.0)),
-      focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10.0), borderSide: const BorderSide(color: Colors.red, width: 2.0)),
+      focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          borderSide: const BorderSide(color: Colors.blue)),
+      enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          borderSide: BorderSide(color: Colors.blue.shade300)),
+      errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          borderSide: BorderSide(color: Colors.red.shade300, width: 2.0)),
+      focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          borderSide: const BorderSide(color: Colors.red, width: 2.0)),
     );
   }
 
@@ -30,7 +38,8 @@ class ThemeHelper {
     ]);
   }
 
-  BoxDecoration buttonBoxDecoration(BuildContext context, [String color1 = ""]) {
+  BoxDecoration buttonBoxDecoration(BuildContext context,
+      [String color1 = ""]) {
     Color c1 = Theme.of(context).primaryColor;
     if (color1.isEmpty == false) {
       c1 = HexColor(color1);
