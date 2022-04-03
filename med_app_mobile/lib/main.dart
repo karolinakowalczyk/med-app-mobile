@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
-
 import 'pages/login_page.dart';
 
 void main() {
