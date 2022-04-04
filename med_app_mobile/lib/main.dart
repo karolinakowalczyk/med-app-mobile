@@ -1,6 +1,6 @@
 // ignore_for_file: deprecated_member_use
 
-import 'package:firebase_auth/firebase_auth.dart';
+//import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
@@ -18,10 +18,9 @@ void main() async {
 class MyApp extends StatelessWidget {
   MyApp({Key? key}) : super(key: key);
 
-  final Color _primaryColor = HexColor('#4B62FF');
   final Color _accentColor = HexColor('#26C6DA');
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  // final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // This widget is the root of application.
   @override
@@ -34,8 +33,7 @@ class MyApp extends StatelessWidget {
           title: 'Flutter Demo',
           theme: ThemeData(
             // This is the theme of application.
-
-            primaryColor: _primaryColor,
+            primaryColor: Colors.indigo,
             accentColor: _accentColor,
             scaffoldBackgroundColor: Colors.grey.shade100,
             primarySwatch: Colors.indigo,

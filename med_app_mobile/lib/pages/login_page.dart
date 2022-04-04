@@ -5,8 +5,7 @@ import 'package:validators/validators.dart';
 
 import 'registration_page.dart';
 
-/* Strona logowania - trzeba dodać logikę do przycisku 'Remember me', dodać logikę
-wysyłającą do odpowiedniego konta itp. */
+// To strona logowania do aplikacji
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
 
@@ -14,29 +13,13 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> with RestorationMixin {
+class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  RestorableBoolN checkboxValue = RestorableBoolN(false);
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   var _isLoading = false;
   final AuthServices _auth = AuthServices();
 
-  @override
-  String get restorationId => 'checkbox';
-
-  @override
-  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
-    registerForRestoration(checkboxValue, restorationId);
-  }
-
-  @override
-  void dispose() {
-    checkboxValue.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
 
   Future<void> login() async {
     if (!_formKey.currentState!.validate()) {
@@ -82,7 +65,7 @@ class _LoginPageState extends State<LoginPage> with RestorationMixin {
                         fontWeight: FontWeight.normal,
                       ),
                     ),
-                    const SizedBox(height: 80),
+                    const SizedBox(height: 100),
                     Form(
                       key: _formKey,
                       child: Column(
@@ -114,7 +97,7 @@ class _LoginPageState extends State<LoginPage> with RestorationMixin {
                               controller: _passwordController,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please enter phone number';
+                                  return 'Please enter password';
                                 }
                                 return null;
                               },
@@ -122,30 +105,7 @@ class _LoginPageState extends State<LoginPage> with RestorationMixin {
                             decoration:
                                 ThemeHelper().inputBoxDecorationShaddow(),
                           ),
-                          const SizedBox(height: 10),
-                          Container(
-                            // Checkbox od zapamiętania użytkownika, trzeba to jakoś oprogramować
-                            margin: const EdgeInsets.fromLTRB(0, 0, 10, 20),
-                            alignment: Alignment.topLeft,
-                            child: Row(
-                              children: <Widget>[
-                                Checkbox(
-                                  value: checkboxValue.value,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      checkboxValue.value = value;
-                                    });
-                                  },
-                                ),
-                                const Text(
-                                  'Remember me',
-                                  style: TextStyle(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.w600),
-                                ),
-                              ],
-                            ),
-                          ),
+                          const SizedBox(height: 20),
                           !_isLoading
                               ? Container(
                                   // Przycisk logujący do konta na podstawie hasła i e-maila
@@ -211,7 +171,7 @@ class _LoginPageState extends State<LoginPage> with RestorationMixin {
                           ),
                           const SizedBox(width: 30),
                           Container(
-                            // Przycisk do providera od Googla - oprogramować
+                            // Przycisk do providera od Googla
                             margin: const EdgeInsets.fromLTRB(10, 15, 10, 20),
                             decoration: ThemeHelper()
                                 .buttonBoxDecoration(context, '#FFFFFF'),
@@ -238,7 +198,6 @@ class _LoginPageState extends State<LoginPage> with RestorationMixin {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 15),
                         ],
                       ),
                     ),
