@@ -1,9 +1,8 @@
-import 'package:firebase_auth/firebase_auth.dart';
+//import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:med_app_mobile/models/user_patient.dart';
 import 'package:med_app_mobile/pages/login_page.dart';
 import 'package:med_app_mobile/pages/main_page.dart';
-import 'package:med_app_mobile/services/auth.dart';
 import 'package:provider/provider.dart';
 
 class Wrapper extends StatelessWidget {
@@ -12,7 +11,7 @@ class Wrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<UserPatient?>(context);
-    final FirebaseAuth _auth = FirebaseAuth.instance;
+    //final FirebaseAuth _auth = FirebaseAuth.instance;
 
     // print(user);
     // print(_auth.currentUser!.displayName);

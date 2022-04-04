@@ -83,11 +83,11 @@ class _RegistrationPageState extends State<RegistrationPage>
                   const Text(
                     'Create account',
                     style: TextStyle(
-                      fontSize: 45,
+                      fontSize: 40,
                       fontWeight: FontWeight.normal,
                     ),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 40),
                   Form(
                     key: _formKey,
                     child: Column(
@@ -108,7 +108,7 @@ class _RegistrationPageState extends State<RegistrationPage>
                           ),
                           decoration: ThemeHelper().inputBoxDecorationShaddow(),
                         ),
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 20),
                         Container(
                           child: TextFormField(
                             decoration: ThemeHelper().textInputDecoration(
@@ -126,9 +126,8 @@ class _RegistrationPageState extends State<RegistrationPage>
                           ),
                           decoration: ThemeHelper().inputBoxDecorationShaddow(),
                         ),
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 20),
                         Container(
-                          // Tu trzeba sprawdzić czy numer ma 9 cyfr
                           child: TextFormField(
                             decoration: ThemeHelper().textInputDecoration(
                                 'Phone number', 'Enter your phone number'),
@@ -146,7 +145,7 @@ class _RegistrationPageState extends State<RegistrationPage>
                           ),
                           decoration: ThemeHelper().inputBoxDecorationShaddow(),
                         ),
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 20),
                         Container(
                           child: TextFormField(
                             obscureText: true,
@@ -155,8 +154,8 @@ class _RegistrationPageState extends State<RegistrationPage>
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Please enter password';
-                              } else if (value.length < 6) {
-                                return 'Password must contain at least 6 characters';
+                              } else if (value.length < 7) {
+                                return 'Password must contain at least 7 characters';
                               }
                               return null;
                             },
@@ -164,9 +163,8 @@ class _RegistrationPageState extends State<RegistrationPage>
                           ),
                           decoration: ThemeHelper().inputBoxDecorationShaddow(),
                         ),
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 20),
                         Container(
-                          // Tu trzeba sprawdzić czy hasło takie samo jak poprzednie
                           child: TextFormField(
                             obscureText: true,
                             decoration: ThemeHelper().textInputDecoration(
@@ -199,6 +197,7 @@ class _RegistrationPageState extends State<RegistrationPage>
                                         });
                                       },
                                     ),
+                                    // TODO: stworzyć ostrzeżenie o braku zaznaczenia checkboxa
                                     const Text(
                                       'I accept all terms and conditions',
                                       style: TextStyle(
@@ -224,7 +223,7 @@ class _RegistrationPageState extends State<RegistrationPage>
                         const SizedBox(width: 20),
                         !_isLoading
                             ? Container(
-                                // To jest przycisk tworzący konto, podpiać bezę danych
+                                // Przycisk tworzący konto
                                 decoration:
                                     ThemeHelper().buttonBoxDecoration(context),
                                 child: ElevatedButton(
@@ -258,7 +257,7 @@ class _RegistrationPageState extends State<RegistrationPage>
                                 child: const CircularProgressIndicator(),
                               ),
                         Container(
-                          // Przycisk wysyłający do rejestracji, chyba nic nie trzeba dodawać
+                          // Przycisk wysyłający do logowania
                           margin: const EdgeInsets.fromLTRB(10, 15, 10, 20),
                           alignment: Alignment.center,
                           child: GestureDetector(
