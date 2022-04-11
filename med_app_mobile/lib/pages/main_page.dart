@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:med_app_mobile/helpers/card_helper.dart';
 import 'package:med_app_mobile/models/user_patient.dart';
 import 'package:med_app_mobile/pages/appoint_manager_page.dart';
 import 'package:med_app_mobile/services/auth.dart';
@@ -129,17 +130,43 @@ class _MainPageState extends State<MainPage> with
         ),
       ),
       body: TabBarView(
-        // TODO: wstawić kafelki z wizytami, receptami itd.
+        // TODO: wstawić "prawdziwe" kafelki z bazy
         controller: _tabController,
-        children: const [
-          Center(
-            child: Text("Appointments")
+        children: [
+          // Każda kolumna to inny Tab, np. tu mamy 'Appointments' ...
+          Column(
+            children: <Widget>[
+              CardHelper().appointCard(
+                context,
+                'covid vaccination', 
+                'Monday, January 27, 2022', 
+                '11:45 AM', 
+                'dr Garviel Loken'
+              ),
+            ],
           ),
-          Center(
-            child: Text("Prescriptions")
+          // ... a tu mamy już 'Prescriptions'
+          Column(
+            children: <Widget>[
+              CardHelper().prescCard(
+                context,
+                'asamax 500', 
+                'dr Garviel Loken', 
+                '6969', 
+                '27.06.2022 - 27.07.2022',
+                '2x2'
+              ),
+            ],
           ),
-          Center(
-            child: Text("Recommendations")
+          Column(
+            children: <Widget>[
+              CardHelper().recomCard(
+                context,
+                'i don\'t even know', 
+                'what is supposed to be here', 
+                'Lorem ipsum'
+              ),
+            ],
           )
         ],
       )
