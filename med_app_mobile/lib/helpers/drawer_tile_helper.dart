@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 // Ta klasa zawiera wzór elementu ListTile do Drawer'a.
-class DrawerTileHelper {
+class DrawerTileHelper{
   final double _drawerIconSize = 24;
   final double _drawerFontSize = 17;
 
@@ -25,12 +25,12 @@ class DrawerTileHelper {
         ),
       ),
       onTap: () {
-        Navigator.of(context).push(
+        Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (BuildContext context) {
               return page();
             }
-          )
+          ),
         );
       },
     );
