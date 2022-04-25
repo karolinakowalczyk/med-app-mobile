@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:med_app_mobile/helpers/card_helper.dart';
+import 'package:med_app_mobile/helpers/drawer_helper.dart';
 import 'package:med_app_mobile/models/user_patient.dart';
-import 'package:med_app_mobile/pages/appoint_manager_page.dart';
 import 'package:med_app_mobile/services/auth.dart';
 import 'package:provider/provider.dart';
-import 'package:med_app_mobile/helpers/drawer_tile_helper.dart';
 
-// Główna strona aplikacji z Drawer'em, TabBar'em i wylogowaniem, --- w trakcie tworzenia ---
+// Główna strona aplikacji z Drawer'em, TabBar'em i wylogowaniem
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
 
@@ -79,56 +78,13 @@ class _MainPageState extends State<MainPage> with
           controller: _tabController,
           isScrollable: true,
           tabs: const [
-            Tab(text: "Appointments",),
-            Tab(text: "Prescriptions",),
-            Tab(text: "Recommendations",),
+            Tab(child: Text("Appointments", style: TextStyle(fontSize: 16))),
+            Tab(child: Text("Prescriptions", style: TextStyle(fontSize: 16))),
+            Tab(child: Text("Recommendations", style: TextStyle(fontSize: 16))),
           ],
         ),
       ),
-      drawer: Drawer(
-        child: Container(
-          color: Colors.white,
-          child: ListView(
-            children: [
-              DrawerHeader(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor
-                ),
-                child: Container(
-                  alignment: Alignment.bottomLeft,
-                  child: const Text(
-                    // TODO: wstawić prawdziwą nazwę użytkownika zamiast 'User name'
-                    'User name',
-                    style: TextStyle(
-                      fontSize: 25,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              /* TODO: w "Manage appointments" i "Log out" wstawić ścieżki
-               prowadzące do odpowiednich stron aplikacji */
-              DrawerTileHelper().defaultTile(
-                context, 
-                Icons.calendar_month, 
-                "Manage appointments", 
-                () => const AppointManagerPage()
-              ),
-              Divider(
-                color: Theme.of(context).primaryColor,
-                height: 1,
-              ),
-              DrawerTileHelper().defaultTile(
-                context, 
-                Icons.logout, 
-                "Log out", 
-                () => const AppointManagerPage()
-              ),
-            ],
-          ),
-        ),
-      ),
+      drawer: const DrawerHelper(),
       body: TabBarView(
         // TODO: wstawić "prawdziwe" kafelki z bazy
         controller: _tabController,
