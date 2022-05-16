@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:med_app_mobile/helpers/theme_helper.dart';
+import 'package:med_app_mobile/pages/authentication.dart';
 import 'package:med_app_mobile/services/auth.dart';
 import 'package:validators/validators.dart';
 
-import 'registration_page.dart';
-
 // To strona logowania do aplikacji
 class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+  final Function changeAuthMode;
+  const LoginPage(this.changeAuthMode, {Key? key}) : super(key: key);
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -19,7 +19,6 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   var _isLoading = false;
   final AuthServices _auth = AuthServices();
-
 
   Future<void> login() async {
     if (!_formKey.currentState!.validate()) {
@@ -148,13 +147,14 @@ class _LoginPageState extends State<LoginPage> {
                             alignment: Alignment.center,
                             child: GestureDetector(
                               onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const RegistrationPage(),
-                                  ),
-                                );
+                                widget.changeAuthMode(AuthModes.registration);
+                                // Navigator.push(
+                                //   context,
+                                //   MaterialPageRoute(
+                                //     builder: (context) =>
+                                //         const RegistrationPage(),
+                                //   ),
+                                // );
                               },
                               child: Text(
                                 'Create account',

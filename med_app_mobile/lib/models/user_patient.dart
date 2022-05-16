@@ -3,20 +3,23 @@ class UserPatient {
   final String name;
   final String email;
   final String phone;
+  final bool google;
 
   UserPatient({
     this.id,
     required this.name,
     required this.email,
     required this.phone,
+    required this.google,
   });
 
-  factory UserPatient.fromJSON(String id, dynamic json) {
+  factory UserPatient.fromJSON(String id, dynamic json, bool ifGoogle) {
     return UserPatient(
       id: id,
       name: json['name'],
       email: json['email'],
       phone: json['phone'],
+      google: ifGoogle,
     );
   }
 

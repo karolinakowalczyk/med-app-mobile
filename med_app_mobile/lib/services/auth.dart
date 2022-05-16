@@ -6,31 +6,39 @@ import 'package:med_app_mobile/models/user_patient.dart';
 class AuthServices {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: <String>[
-      'email',
-    ],
-  );
+  UserPatient? _user;
 
   Future<UserPatient?> _userFromFirebase(User? user) async {
     if (user == null) {
       return null;
     }
+    // print(user);
     DocumentReference userDoc = _firestore.collection('patients').doc(user.uid);
     DocumentSnapshot data = await userDoc.get();
 
     if (data.exists) {
-      UserPatient? loadedUser = UserPatient.fromJSON(user.uid, data.data());
+      UserPatient? loadedUser =
+          UserPatient.fromJSON(user.uid, data.data(), false);
+      setUser(loadedUser);
       return loadedUser;
     } else if (_auth.currentUser!.providerData[0].providerId == 'google.com') {
       User? currentUser = _auth.currentUser;
+      print(currentUser);
       UserPatient? loadedUser = UserPatient(
-        name: currentUser!.displayName ?? '',
+        id: currentUser!.uid,
+        name: currentUser.displayName ?? '',
         email: currentUser.email ?? '',
-        phone: currentUser.phoneNumber ?? '',
+        phone: currentUser.phoneNumber ?? '123456789',
+        google: true,
       );
+      await _firestore
+          .collection('patients')
+          .doc(user.uid)
+          .set(loadedUser.toJson());
+      setUser(loadedUser);
       return loadedUser;
     } else {
+      setUser(null);
       return null;
     }
   }
@@ -39,6 +47,12 @@ class AuthServices {
       _auth.authStateChanges().asyncMap((user) async {
         return _userFromFirebase(user);
       });
+
+  UserPatient? getUser() => _user;
+
+  void setUser(UserPatient? user) {
+    _user = user;
+  }
 
   Future<void> signIn(String email, String password) async {
     try {
@@ -52,25 +66,27 @@ class AuthServices {
   }
 
   Future<void> signInWithGoogle() async {
-    // Trigger the authentication flow
-    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-
-    // Obtain the auth details from the request
-    final GoogleSignInAuthentication? googleAuth =
-        await googleUser?.authentication;
-
-    // Create a new credential
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth?.accessToken,
-      idToken: googleAuth?.idToken,
-    );
-
-    await _auth.signInWithCredential(credential);
+    final GoogleSignIn googleSignIn = GoogleSignIn();
+    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+    if (googleUser != null) {
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      if (googleAuth.idToken != null) {
+        final userCredential =
+            await _auth.signInWithCredential(GoogleAuthProvider.credential(
+          idToken: googleAuth.idToken,
+          accessToken: googleAuth.accessToken,
+        ));
+        // return userCredential.user;
+      }
+    }
   }
 
   Future<void> googleSignOut() async {
+    final GoogleSignIn googleSignIn = GoogleSignIn();
     try {
-      await _googleSignIn.signOut();
+      await googleSignIn.signOut();
+      await _auth.signOut();
     } catch (e) {
       throw e.toString();
     }
@@ -95,6 +111,7 @@ class AuthServices {
             name: name,
             email: email,
             phone: phone,
+            google: false,
           ).toJson(),
         );
       }
@@ -106,7 +123,7 @@ class AuthServices {
   Future<void> signOut() async {
     try {
       if (_auth.currentUser!.providerData[0].providerId == 'google.com') {
-        await signInWithGoogle();
+        await googleSignOut();
       }
       return await _auth.signOut();
     } catch (e) {

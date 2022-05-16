@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:med_app_mobile/helpers/alert_window_helper.dart';
+import 'package:med_app_mobile/pages/authentication.dart';
 import 'package:validators/validators.dart';
 import 'package:med_app_mobile/helpers/theme_helper.dart';
 import 'package:med_app_mobile/services/auth.dart';
@@ -6,7 +8,8 @@ import 'package:med_app_mobile/services/auth.dart';
 /* Strona rejestracji - trzeba dodać logiki sprawdzające np. czy numer telefonu ma 9 cyfr,
 czy e-mail jest 'normalny', czy Terms&Regul jest zaznaczone itp. */
 class RegistrationPage extends StatefulWidget {
-  const RegistrationPage({Key? key}) : super(key: key);
+  final Function changeAuthMode;
+  const RegistrationPage(this.changeAuthMode, {Key? key}) : super(key: key);
 
   @override
   State<RegistrationPage> createState() => _RegistrationPageState();
@@ -45,6 +48,18 @@ class _RegistrationPageState extends State<RegistrationPage>
     if (!_formKey.currentState!.validate()) {
       // Invalid!
       return;
+    }
+    if (checkboxValue.value != null) {
+      if (checkboxValue.value == false) {
+        showDialog<String>(
+          context: context,
+          builder: (BuildContext context) => const AlertWindow(
+            title: 'Attention',
+            message: 'You have to accept condition terms',
+          ),
+        );
+        return;
+      }
     }
 
     setState(() {
@@ -262,7 +277,7 @@ class _RegistrationPageState extends State<RegistrationPage>
                           alignment: Alignment.center,
                           child: GestureDetector(
                             onTap: () {
-                              Navigator.of(context).pop();
+                              widget.changeAuthMode(AuthModes.login);
                             },
                             child: Text(
                               'Login instead',
