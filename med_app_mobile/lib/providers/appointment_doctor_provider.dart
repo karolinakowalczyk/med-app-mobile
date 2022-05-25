@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:med_app_mobile/models/appointment_type.dart';
 import 'package:med_app_mobile/models/doctor_model.dart';
 
 class AppointmentDoctorProvider extends ChangeNotifier {
   int _activeStepIndex = 0;
   int _selectedDoctor = -1;
   Doctor? _doctor;
+  AppointmentType? _appointmentType;
 
   int get selectedDoctor => _selectedDoctor;
 
@@ -29,5 +31,11 @@ class AppointmentDoctorProvider extends ChangeNotifier {
   void setActiveStepIndex(int i) {
     _activeStepIndex = i;
     notifyListeners();
+  }
+
+  AppointmentType? get appointmentType => _appointmentType;
+
+  void setAppointmentType(AppointmentType? appType) {
+    _appointmentType = appType;
   }
 }

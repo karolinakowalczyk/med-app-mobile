@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:med_app_mobile/helpers/drawer_tile_helper.dart';
+import 'package:med_app_mobile/models/appointment_type.dart';
 import 'package:med_app_mobile/models/doctor_model.dart';
 import 'package:med_app_mobile/models/user_patient.dart';
 import 'package:med_app_mobile/pages/appoint_manager_page.dart';
@@ -17,8 +18,11 @@ class DrawerHelper extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = Provider.of<UserPatient?>(context);
     final AuthServices _auth = AuthServices();
-    final Stream<List<Doctor>> _doctors =
-        Provider.of<DoctorDataProvider>(context, listen: false).doctors;
+    final _doctorDataProvider =
+        Provider.of<DoctorDataProvider>(context, listen: false);
+    final Stream<List<Doctor>> _doctors = _doctorDataProvider.doctors;
+    final Stream<List<AppointmentCategory>> _appointmentsTypes =
+        _doctorDataProvider.appointmentCategories;
     return Drawer(
       child: Container(
         color: Colors.white,
@@ -52,6 +56,7 @@ class DrawerHelper extends StatelessWidget {
               "Manage appointments",
               () => AppointManagerPage(
                 doctorsStream: _doctors,
+                appCategoriesStream: _appointmentsTypes,
               ),
               false,
             ),

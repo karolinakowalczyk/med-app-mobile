@@ -4,39 +4,59 @@ import 'package:intl/intl.dart';
 
 class AppointmentHourProvider extends ChangeNotifier {
   final _firestore = FirebaseFirestore.instance;
-  final _baseAvailableAppointments = [
-    '08:00',
-    '08:30',
-    '09:00',
-    '09:30',
-    '10:00',
-    '10:30',
-    '11:00',
-    '11:30',
-    '12:00',
-    '12:30',
-    '13:00',
-    '13:30',
-    '14:00',
-    '14:30',
-    '15:00',
-    '15:30',
-  ];
+  var startingHour = const Duration(hours: 8);
+  final List<Duration> _baseAvailableAppointments = [];
+  bool _isNFZ = false;
+
+  bool get isNFZ => _isNFZ;
+
+  void setIsNFZ(bool isNfz) {
+    _isNFZ = isNfz;
+    notifyListeners();
+  }
+
+  AppointmentHourProvider() {
+    _baseAvailableAppointments.add(startingHour);
+    for (var i = 15; i < 480; i = i + 15) {
+      _baseAvailableAppointments.add(startingHour + Duration(minutes: i));
+    }
+  }
+
+  String formateHour(Duration duration) {
+    String minutes = (duration.inMinutes % 60 == 0)
+        ? '00'
+        : (duration.inMinutes % 60) < 10
+            ? '0' + (duration.inMinutes % 60).toString()
+            : (duration.inMinutes % 60).toString();
+    String hour = duration.inHours.toString();
+    if (duration.inHours < 10) {
+      return '0' + hour + ':' + minutes;
+    }
+    return hour + ':' + minutes;
+  }
+
+  Duration stringToDuration(String hour) {
+    List<String> timeElems = hour.split(':');
+
+    return Duration(
+        hours: int.parse(timeElems[0]), minutes: int.parse(timeElems[1]));
+  }
+
   // ignore: prefer_final_fields
-  List<String> _availableAppointments = [];
-  var _selectedHour = 'Not selected';
-  var _endHour = 'Not known';
+  List<Duration> _availableAppointments = [];
+  var _selectedHour = const Duration(minutes: 0);
+  var _endHour = const Duration(minutes: 0);
   late String _date = DateFormat('dd-MM-yyy').format(DateTime.now());
 
-  String get selectedHour => _selectedHour;
-  String get endHour => _endHour;
+  Duration get selectedHour => _selectedHour;
+  Duration get endHour => _endHour;
 
-  void selctHour(String i, String end) {
-    if (_selectedHour == i) {
-      _selectedHour = 'Not selected';
-      _endHour = 'Not known';
+  void selctHour(Duration start, Duration end) {
+    if (_selectedHour.compareTo(start) == 0) {
+      _selectedHour = const Duration(minutes: 0);
+      _endHour = const Duration(minutes: 0);
     } else {
-      _selectedHour = i;
+      _selectedHour = start;
       _endHour = end;
     }
     notifyListeners();
@@ -48,7 +68,11 @@ class AppointmentHourProvider extends ChangeNotifier {
     _date = newDate;
   }
 
-  Stream<List<String>> availableAppointments(String day, String doctorId) {
+  Stream<List<Duration>> availableAppointments(
+    String day,
+    String doctorId,
+    Duration appLen,
+  ) {
     _availableAppointments.clear();
     _availableAppointments.addAll(_baseAvailableAppointments);
     return _firestore
@@ -59,15 +83,40 @@ class AppointmentHourProvider extends ChangeNotifier {
         .snapshots()
         .asyncMap(
       (appointments) {
+        List<Duration> toRemove = [];
         for (var app in appointments.docs) {
-          _availableAppointments.remove(app.data()['hour']);
+          final len = int.parse(app.data()['length']);
+          Duration length = Duration(minutes: len);
+
+          Duration appStart = stringToDuration(app.data()['hour']);
+
+          _availableAppointments.removeWhere((element) =>
+              element.compareTo(appStart) >= 0 &&
+              element.compareTo(appStart + length) < 0);
+
+          for (var app in _availableAppointments) {
+            var num = appLen.inMinutes ~/ 15 - 1;
+            var mult = 1;
+            for (var multi = 1; multi <= num; multi++) {
+              if (!_availableAppointments
+                  .contains(app + Duration(minutes: mult * 15))) {
+                toRemove.add(app);
+                break;
+              }
+              mult++;
+            }
+          }
+        }
+
+        for (var index in toRemove) {
+          _availableAppointments.removeWhere((element) => element == index);
         }
         return _availableAppointments;
       },
     );
   }
 
-  List<String> getAppointments() {
+  List<Duration> getAppointments() {
     return _availableAppointments;
   }
 
@@ -78,8 +127,9 @@ class AppointmentHourProvider extends ChangeNotifier {
     required String doctorId,
     required String doctorName,
     required String date,
-    required String hour,
-    required String endHour,
+    required Duration hour,
+    required int length,
+    required Duration endHour,
   }) async {
     final result = await _firestore
         .collection('appointments')
@@ -89,8 +139,9 @@ class AppointmentHourProvider extends ChangeNotifier {
       'title': title,
       'doctor': doctorId,
       'doctorName': doctorName,
-      'hour': hour,
-      'endHour': endHour,
+      'hour': formateHour(hour),
+      'endHour': formateHour(endHour),
+      'length': length.toString(),
       'date': date,
       'patient': patientId,
       'patientName': patientName,

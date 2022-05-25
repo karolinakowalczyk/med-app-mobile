@@ -8,6 +8,7 @@ import 'package:med_app_mobile/models/user_patient.dart';
 import 'package:med_app_mobile/pages/auth_wrapper.dart';
 import 'package:med_app_mobile/providers/appointment_doctor_provider.dart';
 import 'package:med_app_mobile/providers/appointment_hour_provider.dart';
+import 'package:med_app_mobile/providers/appointment_type_provider.dart';
 import 'package:med_app_mobile/providers/doctors_data_provider.dart';
 import 'package:med_app_mobile/providers/main_page_provider.dart';
 import 'package:med_app_mobile/providers/user_provider.dart';
@@ -34,11 +35,14 @@ class MyApp extends StatelessWidget {
       builder: (context, _) {
         return MultiProvider(
           providers: [
-            ChangeNotifierProvider<AppointmentHourProvider>(
-              create: (context) => AppointmentHourProvider(),
+            ChangeNotifierProvider<AppointmentTypeProvider>(
+              create: (context) => AppointmentTypeProvider(),
             ),
             ChangeNotifierProvider<AppointmentDoctorProvider>(
               create: (context) => AppointmentDoctorProvider(),
+            ),
+            ChangeNotifierProvider<AppointmentHourProvider>(
+              create: (context) => AppointmentHourProvider(),
             ),
             ChangeNotifierProvider<DoctorDataProvider>(
               create: (context) => DoctorDataProvider(),

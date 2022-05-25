@@ -12,7 +12,6 @@ class AuthServices {
     if (user == null) {
       return null;
     }
-    // print(user);
     DocumentReference userDoc = _firestore.collection('patients').doc(user.uid);
     DocumentSnapshot data = await userDoc.get();
 
@@ -23,7 +22,6 @@ class AuthServices {
       return loadedUser;
     } else if (_auth.currentUser!.providerData[0].providerId == 'google.com') {
       User? currentUser = _auth.currentUser;
-      print(currentUser);
       UserPatient? loadedUser = UserPatient(
         id: currentUser!.uid,
         name: currentUser.displayName ?? '',

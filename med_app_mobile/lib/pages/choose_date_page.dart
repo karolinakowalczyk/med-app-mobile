@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:med_app_mobile/models/doctor_model.dart';
 import 'package:med_app_mobile/providers/appointment_doctor_provider.dart';
 import 'package:med_app_mobile/providers/appointment_hour_provider.dart';
+import 'package:med_app_mobile/providers/appointment_type_provider.dart';
 import 'package:provider/provider.dart';
 
 class ChooseDatePage extends StatefulWidget {
@@ -13,18 +14,19 @@ class ChooseDatePage extends StatefulWidget {
 }
 
 class _ChooseDatePageState extends State<ChooseDatePage> {
-  DateTime currentDate = DateTime.now();
+  late DateTime currentDate = DateTime.now();
   late String formattedDate = DateFormat('dd-MM-yyy').format(currentDate);
 
-  Future<String> _selectDate(BuildContext context) async {
-    String date = "";
+  Future<String> _selectDate(BuildContext context, bool nfz) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: currentDate,
-      firstDate: DateTime(2021),
-      lastDate: DateTime.now().add(
-        const Duration(days: 183),
-      ),
+      initialDate:
+          !nfz ? currentDate : currentDate.add(const Duration(days: 178)),
+      firstDate:
+          !nfz ? DateTime.now() : DateTime.now().add(const Duration(days: 178)),
+      lastDate: !nfz
+          ? DateTime.now().add(const Duration(days: 183))
+          : DateTime.now().add(const Duration(days: 365)),
     );
     if (pickedDate != null && pickedDate != currentDate) {
       setState(() {
@@ -37,9 +39,10 @@ class _ChooseDatePageState extends State<ChooseDatePage> {
   @override
   void initState() {
     super.initState();
-    Provider.of<AppointmentHourProvider>(context, listen: false).setDate(
-      formattedDate,
-    );
+    // final prov = Provider.of<AppointmentHourProvider>(context, listen: false);
+    // prov.setDate(
+    //   formattedDate,
+    // );
   }
 
   @override
@@ -47,20 +50,30 @@ class _ChooseDatePageState extends State<ChooseDatePage> {
     final size = MediaQuery.of(context).size;
     final appointmentHourProv =
         Provider.of<AppointmentHourProvider>(context, listen: false);
+    // final appointmentTypeProv =
+    //     Provider.of<AppointmentTypeProvider>(context, listen: false);
 
     return Consumer<AppointmentDoctorProvider>(
-      builder: (_, value, __) {
-        final selectedDoctor = value.doctor ??
+      builder: (_, appDoctorvalue, __) {
+        final selectedDoctor = appDoctorvalue.doctor ??
             Doctor(
               id: 'Random',
               name: 'Random',
               email: '',
               phone: '',
+              appointmentTypes: [],
             );
-        return StreamBuilder<List<String>>(
+        return StreamBuilder<List<Duration>>(
             stream: appointmentHourProv.availableAppointments(
               formattedDate,
-              value.doctor == null ? 'Random' : value.doctor!.id,
+              appDoctorvalue.doctor == null
+                  ? 'Random'
+                  : appDoctorvalue.doctor!.id,
+              Duration(
+                minutes: appDoctorvalue.appointmentType == null
+                    ? 15
+                    : appDoctorvalue.appointmentType!.estimatedTime,
+              ),
             ),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -105,7 +118,8 @@ class _ChooseDatePageState extends State<ChooseDatePage> {
                           ),
                           OutlinedButton(
                               onPressed: () async {
-                                final date = await _selectDate(context);
+                                final date = await _selectDate(
+                                    context, appointmentHourProv.isNFZ);
                                 appointmentHourProv.setDate(
                                   date,
                                 );
@@ -126,6 +140,20 @@ class _ChooseDatePageState extends State<ChooseDatePage> {
                     */
                     Consumer<AppointmentHourProvider>(
                       builder: (context, value, child) {
+                        if (value.isNFZ) {
+                          currentDate =
+                              DateTime.now().add(const Duration(days: 178));
+                          formattedDate =
+                              DateFormat('dd-MM-yyy').format(currentDate);
+
+                          value.setDate(formattedDate);
+                        } else {
+                          currentDate = DateTime.now();
+                          formattedDate =
+                              DateFormat('dd-MM-yyy').format(currentDate);
+
+                          value.setDate(formattedDate);
+                        }
                         return Card(
                           elevation: 5,
                           shape: RoundedRectangleBorder(
@@ -162,17 +190,14 @@ class _ChooseDatePageState extends State<ChooseDatePage> {
                                                     Radius.circular(36),
                                                   ),
                                                   onTap: () {
-                                                    var endInd =
-                                                        appointmentHourProv
-                                                            .getAppointments()
-                                                            .indexOf(element);
                                                     value.selctHour(
                                                       element,
-                                                      endInd < 15
-                                                          ? appointmentHourProv
-                                                                  .getAppointments()[
-                                                              endInd + 1]
-                                                          : "16:00",
+                                                      element +
+                                                          Duration(
+                                                            minutes: appDoctorvalue
+                                                                .appointmentType!
+                                                                .estimatedTime,
+                                                          ),
                                                     );
                                                   },
                                                   child: Container(
@@ -215,7 +240,9 @@ class _ChooseDatePageState extends State<ChooseDatePage> {
                                                               const EdgeInsets
                                                                   .all(2.0),
                                                           child: Text(
-                                                            element,
+                                                            appointmentHourProv
+                                                                .formateHour(
+                                                                    element),
                                                             style: TextStyle(
                                                               fontSize: 17,
                                                               color:

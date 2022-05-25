@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:med_app_mobile/helpers/card_helper.dart';
 import 'package:med_app_mobile/helpers/drawer_helper.dart';
 import 'package:med_app_mobile/models/appointment_model.dart';
+import 'package:med_app_mobile/models/prescription_model.dart';
 import 'package:med_app_mobile/models/user_patient.dart';
 import 'package:med_app_mobile/providers/main_page_provider.dart';
 import 'package:provider/provider.dart';
@@ -125,6 +126,8 @@ class _MainPageState extends State<MainPage>
                             app.date,
                             app.hour,
                             'Doctor: ' + app.doctor,
+                            true,
+                            appointmentId: app.id,
                           );
                         }),
                       ]),
@@ -136,19 +139,50 @@ class _MainPageState extends State<MainPage>
                   }
                 }),
             // ... a tu mamy już 'Prescriptions'
-            SingleChildScrollView(
-              child: Column(
-                children: <Widget>[
-                  CardHelper().prescCard(
-                    context,
-                    'asamax 500',
-                    'dr Garviel Loken',
-                    '6969',
-                    '27.06.2022 - 27.07.2022',
-                    '2x2',
-                  ),
-                ],
-              ),
+            StreamBuilder<List<Prescription>>(
+              stream: mainPageProvider.prescriptions(user.id ?? ''),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+                if (snapshot.data!.isNotEmpty) {
+                  return SingleChildScrollView(
+                    child: Column(children: [
+                      ...snapshot.data!.map((presc) {
+                        return CardHelper().prescCard(
+                          context,
+                          user.name,
+                          user.id!,
+                          presc.id,
+                          presc.doctor,
+                          presc.accessCode,
+                          presc.medicines,
+                          presc.date,
+                          presc.date.add(const Duration(days: 31)),
+                          presc.done,
+                        );
+                      })
+                    ]
+                        // <Widget>[
+                        //   CardHelper().prescCard(
+                        //     context,
+                        //     'asamax 500',
+                        //     'dr Garviel Loken',
+                        //     '6969',
+                        //     '27.06.2022 - 27.07.2022',
+                        //     '2x2',
+                        //   ),
+                        // ],
+                        ),
+                  );
+                } else {
+                  return const Center(
+                    child: Text('No prescriptions'),
+                  );
+                }
+              },
             ),
             SingleChildScrollView(
               child: Column(
