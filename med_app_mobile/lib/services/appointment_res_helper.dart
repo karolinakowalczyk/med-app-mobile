@@ -60,7 +60,7 @@ class AppointmentResHelper {
                             builder: (BuildContext context) =>
                                 const AlertWindow(
                               title: 'Error',
-                              message: 'You have to choose an hour',
+                              message: 'You have to choose an hour!',
                             ),
                           )
                         }
@@ -74,6 +74,7 @@ class AppointmentResHelper {
                         appointmentTypeProvider,
                         context,
                         user,
+                        appointmentTypeProvider.editing,
                       )
                     };
     };
@@ -100,34 +101,6 @@ class AppointmentResHelper {
       }),
     );
   }
-
-  static editAppointment(
-    AppointmentDoctorProvider appointmentDoctorProv,
-    AppointmentHourProvider appointmentHourProv,
-    AppointmentTypeProvider appointmentTypeProvider,
-    BuildContext context,
-    String title,
-    String date,
-    String time,
-    String doctor,
-    bool editing, {
-    String? appointmentId,
-  }) {
-    appointmentHourProv.selctHour(
-        const Duration(minutes: 0), const Duration(minutes: 0));
-    appointmentHourProv.setDate("");
-    appointmentHourProv.setIsNFZ(false);
-    appointmentDoctorProv.selctDoctor(-1);
-    appointmentDoctorProv.setDoctor(null);
-    appointmentDoctorProv.setActiveStepIndex(0);
-    appointmentTypeProvider.selectAppType(-1);
-    appointmentTypeProvider.setAppointmentCategoryId('');
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (BuildContext context) {
-        return const MainPage();
-      }),
-    );
-  }
 }
 
 void confirm(
@@ -136,19 +109,41 @@ void confirm(
   AppointmentTypeProvider appointmentTypeProvider,
   BuildContext context,
   UserPatient user,
+  bool editing,
 ) async {
-  await appointmentHourProv.reserveAppointment(
-    patientId: FirebaseAuth.instance.currentUser!.uid,
-    patientName: user.name, //User here,
+  if (editing) {
+    await appointmentHourProv.updateAppointment(
+      patientId: FirebaseAuth.instance.currentUser!.uid,
+      patientName: user.name,
+      title: appointmentDoctorProv.appointmentType!.name,
+      doctorId: appointmentDoctorProv.doctor!.id,
+      doctorName: appointmentDoctorProv.doctor!.name,
+      date: appointmentHourProv.date,
+      hour: appointmentHourProv.selectedHour,
+      length: appointmentDoctorProv.appointmentType!.estimatedTime,
+      endHour: appointmentHourProv.endHour,
+      price: appointmentHourProv.isNFZ
+          ? null
+          : appointmentDoctorProv.appointmentType!.cost,
+    );
+  } else {
+    // Save edit function
+    await appointmentHourProv.reserveAppointment(
+      patientId: FirebaseAuth.instance.currentUser!.uid,
+      patientName: user.name,
+      title: appointmentDoctorProv.appointmentType!.name,
+      doctorId: appointmentDoctorProv.doctor!.id,
+      doctorName: appointmentDoctorProv.doctor!.name,
+      date: appointmentHourProv.date,
+      hour: appointmentHourProv.selectedHour,
+      length: appointmentDoctorProv.appointmentType!.estimatedTime,
+      endHour: appointmentHourProv.endHour,
+      price: appointmentHourProv.isNFZ
+          ? null
+          : appointmentDoctorProv.appointmentType!.cost,
+    );
+  }
 
-    title: appointmentDoctorProv.appointmentType!.name,
-    doctorId: appointmentDoctorProv.doctor!.id,
-    doctorName: appointmentDoctorProv.doctor!.name,
-    date: appointmentHourProv.date,
-    hour: appointmentHourProv.selectedHour,
-    length: appointmentDoctorProv.appointmentType!.estimatedTime,
-    endHour: appointmentHourProv.endHour,
-  );
   appointmentHourProv.selctHour(
       const Duration(minutes: 0), const Duration(minutes: 0));
   appointmentHourProv.setDate("");
@@ -157,6 +152,7 @@ void confirm(
   appointmentDoctorProv.setDoctor(null);
   appointmentDoctorProv.setActiveStepIndex(0);
   appointmentTypeProvider.selectAppType(-1);
+  appointmentTypeProvider.setEditing(false);
   appointmentDoctorProv.setAppointmentType(null);
   appointmentTypeProvider.setAppointmentCategoryId('');
   Navigator.of(context).pushReplacement(

@@ -2,11 +2,16 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:med_app_mobile/helpers/accept_dialog.dart';
+import 'package:med_app_mobile/models/appointment_model.dart';
+import 'package:med_app_mobile/models/appointment_type.dart';
+import 'package:med_app_mobile/models/doctor_model.dart';
 import 'package:med_app_mobile/models/prescription_model.dart';
 import 'package:intl/intl.dart';
+import 'package:med_app_mobile/pages/appoint_manager_page.dart';
 import 'package:med_app_mobile/providers/appointment_doctor_provider.dart';
 import 'package:med_app_mobile/providers/appointment_hour_provider.dart';
 import 'package:med_app_mobile/providers/appointment_type_provider.dart';
+import 'package:med_app_mobile/providers/doctors_data_provider.dart';
 import 'package:med_app_mobile/providers/main_page_provider.dart';
 import 'package:med_app_mobile/services/appointment_res_helper.dart';
 import 'package:provider/provider.dart';
@@ -28,56 +33,136 @@ class CardHelper {
     );
   }
 
-  TextStyle activeTextStyle(
-    bool ifExpired,
+  TextStyle appointmentCardTextStyle(
+    bool ifBefore,
     FontWeight fontWeight,
     double fontSize,
   ) {
     return TextStyle(
       fontSize: fontSize,
       fontWeight: fontWeight,
-      color: ifExpired ? Colors.black : Colors.black.withOpacity(0.4),
+      color: ifBefore ? Colors.black : Colors.black.withOpacity(0.4),
     );
   }
 
-  Card appointCard(
-    BuildContext context,
-    String title,
-    String date,
-    String time,
-    String doctor,
-    bool editing, {
+  Card appointCard({
+    required BuildContext context,
+    required String title,
+    required String date,
+    required String startsTime,
+    required String endsTime,
+    required String doctor,
+    required double? price,
+    required bool editing,
     String? appointmentId,
+    String? patientId,
   }) {
+    final appointment = Appointment(
+      id: appointmentId ?? '-',
+      title: title,
+      doctor: doctor,
+      hour: startsTime,
+      endHour: endsTime,
+      date: date,
+      price: price,
+    );
+    List<String> hourData = startsTime.split(':');
+    bool isBefore = false;
+    // print(DateFormat('dd-MM-yyyy').format(DateTime.now()));
+    if (date != '') {
+      isBefore = DateTime.now().compareTo(DateFormat('dd-MM-yyyy')
+              .parse(date)
+              .add(Duration(
+                  hours: int.parse(hourData[0]),
+                  minutes: int.parse(hourData[1])))) <
+          0;
+    }
     return Card(
-        elevation: 5,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            ListTile(
-                title: Text(
+      elevation: 5,
+      color: isBefore ? Colors.white : Colors.grey[400],
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          ListTile(
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
                   title.toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.normal,
-                  ),
+                  style:
+                      appointmentCardTextStyle(isBefore, FontWeight.bold, 20),
                 ),
-                subtitle: Text(
-                  date,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.normal,
-                  ),
-                ),
-                trailing: editing
+              ],
+            ),
+            subtitle: Text(
+              date,
+              style: isBefore
+                  ? const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    )
+                  : TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black.withOpacity(0.4),
+                    ),
+            ),
+            trailing: editing
+                ? isBefore
                     ? PopupMenuButton(
+                        onSelected: (value) {
+                          if (value == 1) {
+                            Provider.of<MainPageProvider>(context,
+                                    listen: false)
+                                .startEditingAppointment(context, appointment)
+                                .then((value) {
+                              final _doctorDataProvider =
+                                  Provider.of<DoctorDataProvider>(context,
+                                      listen: false);
+                              final Stream<List<Doctor>> _doctors =
+                                  _doctorDataProvider.doctors;
+                              final Stream<List<AppointmentCategory>>
+                                  _appointmentsTypes =
+                                  _doctorDataProvider.appointmentCategories;
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                    builder: (BuildContext context) {
+                                  return AppointManagerPage(
+                                    doctorsStream: _doctors,
+                                    appCategoriesStream: _appointmentsTypes,
+                                  );
+                                }),
+                              );
+                            });
+                          } else if (value == 2) {
+                            showDialog<bool>(
+                              context: context,
+                              builder: (BuildContext context) =>
+                                  const AcceptDialog(
+                                title: 'Warning',
+                                message:
+                                    'Are you sure you want to cancel appointment?',
+                              ),
+                            ).then(
+                              (result) async {
+                                if (result == true) {
+                                  await Provider.of<MainPageProvider>(context,
+                                          listen: false)
+                                      .removeAppointment(
+                                    patientId ?? 'a',
+                                    appointmentId!,
+                                  );
+                                }
+                              },
+                            );
+                          }
+                        },
                         itemBuilder: (context) => [
-                          PopupMenuItem(
-                            child: const Text('Edit visit'),
+                          const PopupMenuItem(
+                            child: Text('Edit visit'),
                             value: 1,
-                            onTap: () {},
                           ),
                           const PopupMenuItem(
                             child: Text('Cancel visit'),
@@ -85,45 +170,96 @@ class CardHelper {
                           ),
                         ],
                       )
-                    : InkWell(
-                        child: const Icon(
-                          Icons.cancel,
-                          color: Colors.red,
-                        ),
-                        onTap: () {
-                          AppointmentResHelper.cancelAppReserving(
-                            Provider.of<AppointmentDoctorProvider>(context,
-                                listen: false),
-                            Provider.of<AppointmentHourProvider>(context,
-                                listen: false),
-                            Provider.of<AppointmentTypeProvider>(context,
-                                listen: false),
-                            context,
-                          );
-                        },
-                      )),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(15, 0, 0, 10),
-              child: Text(
-                'Starts at: $time',
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.normal,
+                    : null
+                : InkWell(
+                    child: const Icon(
+                      Icons.cancel,
+                      color: Colors.red,
+                    ),
+                    onTap: () {
+                      AppointmentResHelper.cancelAppReserving(
+                        Provider.of<AppointmentDoctorProvider>(context,
+                            listen: false),
+                        Provider.of<AppointmentHourProvider>(context,
+                            listen: false),
+                        Provider.of<AppointmentTypeProvider>(context,
+                            listen: false),
+                        context,
+                      );
+                    },
+                  ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(15, 0, 0, 10),
+            child: Row(
+              children: [
+                Text(
+                  'Starts at: ',
+                  style:
+                      appointmentCardTextStyle(isBefore, FontWeight.normal, 17),
                 ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(15, 0, 0, 15),
-              child: Text(
-                doctor,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.normal,
+                Text(
+                  startsTime,
+                  style:
+                      appointmentCardTextStyle(isBefore, FontWeight.bold, 17),
                 ),
-              ),
+              ],
             ),
-          ],
-        ));
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(15, 0, 0, 10),
+            child: Row(
+              children: [
+                Text(
+                  'Ends at: ',
+                  style:
+                      appointmentCardTextStyle(isBefore, FontWeight.normal, 17),
+                ),
+                Text(
+                  endsTime,
+                  style:
+                      appointmentCardTextStyle(isBefore, FontWeight.bold, 17),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(15, 0, 0, 15),
+            child: Row(
+              children: [
+                Text(
+                  'Doctor: ',
+                  style:
+                      appointmentCardTextStyle(isBefore, FontWeight.normal, 17),
+                ),
+                Text(
+                  doctor,
+                  style:
+                      appointmentCardTextStyle(isBefore, FontWeight.bold, 17),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(15, 0, 0, 15),
+            child: Row(
+              children: [
+                Text(
+                  'Price: ',
+                  style:
+                      appointmentCardTextStyle(isBefore, FontWeight.normal, 17),
+                ),
+                Text(
+                  (price != null ? price.toString() : 'NFZ'),
+                  style:
+                      appointmentCardTextStyle(isBefore, FontWeight.bold, 17),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Card prescCard(
@@ -159,19 +295,35 @@ class CardHelper {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           ListTile(
-            title: Row(
+            title: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'Patient: ',
-                  style: prescCardTextStyle(ifExpired, FontWeight.normal, 18),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      DateFormat('dd-MM-yyy').format(date),
+                      style: prescCardTextStyle(ifExpired, FontWeight.bold, 19),
+                    ),
+                  ],
                 ),
-                Text(
-                  patientName,
-                  style: prescCardTextStyle(ifExpired, FontWeight.bold, 19),
+                Row(
+                  children: [
+                    Text(
+                      'Patient: ',
+                      style:
+                          prescCardTextStyle(ifExpired, FontWeight.normal, 18),
+                    ),
+                    Text(
+                      patientName,
+                      style: prescCardTextStyle(ifExpired, FontWeight.bold, 19),
+                    ),
+                  ],
                 ),
               ],
             ),
             subtitle: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'From: ',
@@ -182,10 +334,6 @@ class CardHelper {
                   style: prescCardTextStyle(ifExpired, FontWeight.bold, 19),
                 ),
               ],
-            ),
-            trailing: Text(
-              DateFormat('dd-MM-yyy').format(date),
-              style: prescCardTextStyle(ifExpired, FontWeight.bold, 19),
             ),
           ),
           Padding(
@@ -238,12 +386,26 @@ class CardHelper {
                   ),
                   */
                 if (isDone)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Text(
                       'Fulfilled',
                       style: TextStyle(
-                        color: Colors.green,
+                        color: ifExpired
+                            ? Colors.green.withOpacity(0.4)
+                            : Colors.green,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
+                if (ifExpired && !isDone)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      'Expired',
+                      style: TextStyle(
+                        color: Colors.red.withOpacity(0.4),
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),
@@ -253,16 +415,14 @@ class CardHelper {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: InkWell(
-                      child: const Icon(
-                        Icons.check,
-                        color: Colors.green,
-                      ),
+                      splashColor: Colors.blue,
                       onTap: () {
                         showDialog<bool>(
                           context: context,
                           builder: (BuildContext context) => const AcceptDialog(
                             title: 'Warning',
-                            message: 'Are you sure you fill your prescription?',
+                            message:
+                                'Are you sure you filled your prescription?',
                           ),
                         ).then(
                           (result) {
@@ -278,6 +438,22 @@ class CardHelper {
                           },
                         );
                       },
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(
+                            Icons.check,
+                            color: Colors.green,
+                          ),
+                          Text(
+                            'Mark as done',
+                            style: TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
               ],

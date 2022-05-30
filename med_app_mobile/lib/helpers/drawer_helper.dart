@@ -67,7 +67,6 @@ class DrawerHelper extends StatelessWidget {
               endIndent: 30,
               color: Theme.of(context).primaryColor,
             ),
-            // TODO: wstawić prawdziwe wylogowanie
             DrawerTileHelper().defaultTile(
               context,
               Icons.logout,

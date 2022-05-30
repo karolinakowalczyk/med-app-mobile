@@ -33,7 +33,7 @@ class _MainPageState extends State<MainPage>
   void initState() {
     _tabController = TabController(
       initialIndex: 0,
-      length: 3,
+      length: 2,
       vsync: this,
     );
     _tabController.addListener(() {
@@ -57,7 +57,10 @@ class _MainPageState extends State<MainPage>
     final mainPageProvider =
         Provider.of<MainPageProvider>(context, listen: false);
 
-    return Scaffold(
+    return DefaultTabController(
+      length: 2,
+      initialIndex: 0,
+      child: Scaffold(
         appBar: AppBar(
           title: const Text(
             'Registration app',
@@ -67,35 +70,20 @@ class _MainPageState extends State<MainPage>
             ),
           ),
           iconTheme: const IconThemeData(color: Colors.white),
-          actions: [
-            /* TODO: to ma być przycisk do powiadomień ale przedtem trzeba wrzucić
-           wylogowanie do Drawer'a */
-            IconButton(
-              onPressed: () => () {},
-              icon: const Icon(
-                Icons.notifications,
-              ),
-            ),
-          ],
           bottom: TabBar(
             controller: _tabController,
-            isScrollable: true,
             tabs: const [
               Tab(
+                icon: Icon(Icons.event, size: 18),
                 child: Text(
                   "Appointments",
                   style: TextStyle(fontSize: 16),
                 ),
               ),
               Tab(
+                icon: Icon(Icons.content_paste, size: 18),
                 child: Text(
                   "Prescriptions",
-                  style: TextStyle(fontSize: 16),
-                ),
-              ),
-              Tab(
-                child: Text(
-                  "Recommendations",
                   style: TextStyle(fontSize: 16),
                 ),
               ),
@@ -104,12 +92,13 @@ class _MainPageState extends State<MainPage>
         ),
         drawer: const DrawerHelper(),
         body: TabBarView(
-          // TODO: wstawić "prawdziwe" kafelki z bazy
           controller: _tabController,
           children: [
             // Każda kolumna to inny Tab, np. tu mamy 'Appointments' ...
             StreamBuilder<List<Appointment>>(
-                stream: mainPageProvider.appointments(user!.id ?? ''),
+                stream: user != null
+                    ? mainPageProvider.appointments(user.id!)
+                    : mainPageProvider.appointments(''),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
@@ -121,13 +110,16 @@ class _MainPageState extends State<MainPage>
                       child: Column(children: [
                         ...snapshot.data!.map((app) {
                           return CardHelper().appointCard(
-                            context,
-                            app.title,
-                            app.date,
-                            app.hour,
-                            'Doctor: ' + app.doctor,
-                            true,
+                            context: context,
+                            title: app.title,
+                            date: app.date,
+                            startsTime: app.hour,
+                            endsTime: app.endHour,
+                            doctor: app.doctor,
+                            price: app.price,
+                            editing: true,
                             appointmentId: app.id,
+                            patientId: user!.id,
                           );
                         }),
                       ]),
@@ -140,7 +132,9 @@ class _MainPageState extends State<MainPage>
                 }),
             // ... a tu mamy już 'Prescriptions'
             StreamBuilder<List<Prescription>>(
-              stream: mainPageProvider.prescriptions(user.id ?? ''),
+              stream: user != null
+                  ? mainPageProvider.prescriptions(user.id!)
+                  : mainPageProvider.prescriptions(''),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
@@ -153,7 +147,7 @@ class _MainPageState extends State<MainPage>
                       ...snapshot.data!.map((presc) {
                         return CardHelper().prescCard(
                           context,
-                          user.name,
+                          user!.name,
                           user.id!,
                           presc.id,
                           presc.doctor,
@@ -164,18 +158,7 @@ class _MainPageState extends State<MainPage>
                           presc.done,
                         );
                       })
-                    ]
-                        // <Widget>[
-                        //   CardHelper().prescCard(
-                        //     context,
-                        //     'asamax 500',
-                        //     'dr Garviel Loken',
-                        //     '6969',
-                        //     '27.06.2022 - 27.07.2022',
-                        //     '2x2',
-                        //   ),
-                        // ],
-                        ),
+                    ]),
                   );
                 } else {
                   return const Center(
@@ -184,15 +167,9 @@ class _MainPageState extends State<MainPage>
                 }
               },
             ),
-            SingleChildScrollView(
-              child: Column(
-                children: <Widget>[
-                  CardHelper().recomCard(context, 'i don\'t even know',
-                      'what is supposed to be here', 'Lorem ipsum'),
-                ],
-              ),
-            )
           ],
-        ));
+        ),
+      ),
+    );
   }
 }

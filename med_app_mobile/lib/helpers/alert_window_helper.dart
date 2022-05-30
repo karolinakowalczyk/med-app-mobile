@@ -16,11 +16,34 @@ class AlertWindow extends StatelessWidget {
       title: Text(title),
       content: Text(message),
       actions: <Widget>[
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('OK'),
+        Padding(
+          padding: const EdgeInsets.only(left: 20, right: 10),
+          child: TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'OK',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            style: ButtonStyle(
+              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+              ),
+              backgroundColor: MaterialStateProperty.all(Colors.blue),
+            ),
+          ),
         ),
       ],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(
+          Radius.circular(20.0),
+        ),
+      ),
     );
   }
 }

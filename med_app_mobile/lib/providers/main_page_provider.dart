@@ -1,35 +1,60 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:med_app_mobile/models/appointment_model.dart';
+import 'package:med_app_mobile/models/appointment_type.dart';
+import 'package:med_app_mobile/models/doctor_model.dart';
 import 'package:med_app_mobile/models/prescription_model.dart';
+import 'package:intl/intl.dart';
+import 'package:med_app_mobile/providers/appointment_doctor_provider.dart';
+import 'package:med_app_mobile/providers/appointment_hour_provider.dart';
+import 'package:med_app_mobile/providers/appointment_type_provider.dart';
+import 'package:med_app_mobile/providers/doctors_data_provider.dart';
+import 'package:provider/provider.dart';
 
 class MainPageProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  bool _ifPhoneNumberProvided = false;
+
+  bool get ifPhoneNumberProvided => _ifPhoneNumberProvided;
+
+  void setIfPhoneNumberProvided(bool ifnumberProvided) {
+    _ifPhoneNumberProvided = ifnumberProvided;
+    notifyListeners();
+  }
 
   Stream<List<Appointment>> appointments(String patientId) {
-    return _firestore
-        .collection('patients')
-        .doc(patientId)
-        .collection('appointments')
-        .orderBy('date', descending: true)
-        .snapshots()
-        .asyncMap((appointments) async {
-      List<Appointment> _patientAppointments = [];
-      for (var app in appointments.docs) {
-        DocumentSnapshot appDoc = await _firestore
-            .collection('appointments')
-            .doc(app['date'])
-            .collection('appointments')
-            .doc(app['id'])
-            .get();
-        _patientAppointments.add(Appointment.fromJSON(appDoc.id, appDoc));
-      }
-
-      return _patientAppointments;
-    });
+    if (patientId.isNotEmpty) {
+      return _firestore
+          .collection('patients')
+          .doc(patientId)
+          .collection('appointments')
+          .orderBy('date', descending: false)
+          .snapshots()
+          .asyncMap((appointments) async {
+        List<Appointment> _patientAppointments = [];
+        for (var app in appointments.docs) {
+          DocumentSnapshot appDoc = await _firestore
+              .collection('appointments')
+              .doc(app['date'])
+              .collection('appointments')
+              .doc(app['id'])
+              .get();
+          _patientAppointments
+              .add(Appointment.fromJSON(appDoc.id, appDoc.data()));
+        }
+        _patientAppointments.sort((a, b) => DateFormat('dd-MM-yyyy')
+            .parse(b.date)
+            .compareTo(DateFormat('dd-MM-yyyy').parse(a.date)));
+        return _patientAppointments;
+      });
+    }
+    return const Stream.empty();
   }
 
   Stream<List<Prescription>> prescriptions(String patientId) {
+    if (patientId.isEmpty) {
+      return const Stream.empty();
+    }
     Map<String, String> doctors = {};
     return _firestore
         .collection('patients')
@@ -53,7 +78,7 @@ class MainPageProvider extends ChangeNotifier {
               presc.id, presc.data(), doctorDocument['name']));
         }
       }
-
+      _patientPrescriptions.sort((a, b) => b.date.compareTo(a.date));
       return _patientPrescriptions;
     });
   }
@@ -70,28 +95,40 @@ class MainPageProvider extends ChangeNotifier {
   Future<void> removeAppointment(
     String patientId,
     String appointmentId,
-    String date,
-  ) {
-    DocumentReference appointmentReference = FirebaseFirestore.instance
-        .collection('appointments')
-        .doc(date)
-        .collection('appointments')
-        .doc(appointmentId);
-
-    return FirebaseFirestore.instance.runTransaction((transaction) async {
-      // transaction.delete(appointmentReference);
-
-      QuerySnapshot patientAppointmentReference = await FirebaseFirestore
-          .instance
+  ) async {
+    return _firestore.runTransaction((transaction) async {
+      final result = await FirebaseFirestore.instance
           .collection('patients')
           .doc(patientId)
           .collection('appointments')
-          .where('id', isEqualTo: appointmentId)
           .get();
+      late DocumentReference appOnPatientDocument;
+      late String id;
+      late String date;
 
-      print(patientAppointmentReference);
+      if (result.docs.isNotEmpty) {
+        QueryDocumentSnapshot appointmentOnPatient =
+            result.docs.firstWhere((element) => element['id'] == appointmentId);
+        id = appointmentOnPatient.id;
+        date = appointmentOnPatient['date'];
 
-      // transaction.delete(patientAppointmentReference);
+        appOnPatientDocument = _firestore
+            .collection('patients')
+            .doc(patientId)
+            .collection('appointments')
+            .doc(id);
+      }
+      DocumentReference appOnAppointmentCollection = _firestore
+          .collection('appointments')
+          .doc(date)
+          .collection('appointments')
+          .doc(appointmentId);
+      // ignore: unnecessary_null_comparison
+      if (appOnPatientDocument != null) {
+        transaction.delete(appOnPatientDocument);
+      }
+
+      transaction.delete(appOnAppointmentCollection);
     });
   }
 
@@ -104,5 +141,99 @@ class MainPageProvider extends ChangeNotifier {
         .update({
       'done': true,
     });
+  }
+
+  Future<void> startEditingAppointment(
+    BuildContext context,
+    Appointment appointment,
+  ) async {
+    // PRZYPISYWANIE AKTUALNYCH DANYCH WIZYTY
+    final appointmentHourProv =
+        Provider.of<AppointmentHourProvider>(context, listen: false);
+    final appointmentDoctorProv =
+        Provider.of<AppointmentDoctorProvider>(context, listen: false);
+    final appointmentTypeProvider =
+        Provider.of<AppointmentTypeProvider>(context, listen: false);
+    final doctorDateProv =
+        Provider.of<DoctorDataProvider>(context, listen: false);
+
+    appointmentTypeProvider.setEditing(true);
+    appointmentTypeProvider.setPrevAppointment(appointment);
+    if (doctorDateProv.getAppointmentCategories().isEmpty) {
+      await doctorDateProv.loadAppCategories();
+    }
+    if (doctorDateProv.getDoctors().isEmpty) {
+      await doctorDateProv.loadDoctors();
+    }
+
+    final AppointmentCategory appointmentCategory = doctorDateProv
+        .getAppointmentCategories()
+        .firstWhere((element) => element.name == appointment.title);
+    final int appTypeIndex =
+        doctorDateProv.getAppointmentCategories().indexOf(appointmentCategory);
+
+    if (appointmentTypeProvider.selectedType != appTypeIndex) {
+      appointmentTypeProvider.selectAppType(appTypeIndex);
+      appointmentTypeProvider.setAppointmentCategoryId(appointmentCategory.id);
+    }
+    appointmentTypeProvider
+        .setPrevNfz(appointment.price != null ? false : true);
+    final Duration starthour =
+        appointmentHourProv.stringToDuration(appointment.hour);
+
+    final Duration endhour =
+        appointmentHourProv.stringToDuration(appointment.hour);
+
+    if (appointmentHourProv.selectedHour != starthour) {
+      appointmentHourProv.selctHour(starthour, endhour);
+    }
+
+    appointmentHourProv.setDate(appointment.date);
+    appointmentHourProv.setIsNFZ(appointment.price != null ? false : true);
+    appointmentHourProv.setOldDateForEditing(appointment.date);
+    appointmentHourProv.setAppointmentIdForEditing(appointment.id);
+
+    final Doctor doctor = doctorDateProv
+        .getDoctors()
+        .firstWhere((element) => element.name == appointment.doctor);
+    final int doctorIndex = doctorDateProv
+        .getDoctors()
+        .where((doctor) => doctor.appointmentTypes
+            .where((app) => app.id == appointmentTypeProvider.appointmentTypeId)
+            .toList()
+            .isNotEmpty)
+        .toList()
+        .indexOf(doctor);
+    if (appointmentDoctorProv.selectedDoctor != doctorIndex) {
+      appointmentDoctorProv.selctDoctor(doctorIndex);
+      appointmentDoctorProv.setDoctor(doctor);
+    }
+    AppointmentType appointmentType = doctor.appointmentTypes
+        .where((appointmentType) =>
+            appointmentType.id == appointmentTypeProvider.appointmentTypeId)
+        .first;
+    appointmentDoctorProv.setAppointmentType(appointmentType);
+    appointmentDoctorProv.setActiveStepIndex(0);
+  }
+
+  void clearSettings(BuildContext context) {
+    final appointmentHourProv =
+        Provider.of<AppointmentHourProvider>(context, listen: false);
+    final appointmentDoctorProv =
+        Provider.of<AppointmentDoctorProvider>(context, listen: false);
+    final appointmentTypeProvider =
+        Provider.of<AppointmentTypeProvider>(context, listen: false);
+
+    appointmentHourProv.selctHour(
+        const Duration(minutes: 0), const Duration(minutes: 0));
+    appointmentHourProv.setDate("");
+    appointmentHourProv.setIsNFZ(false);
+    appointmentDoctorProv.selctDoctor(-1);
+    appointmentDoctorProv.setDoctor(null);
+    appointmentDoctorProv.setActiveStepIndex(0);
+    appointmentTypeProvider.selectAppType(-1);
+    appointmentTypeProvider.setEditing(false);
+    appointmentDoctorProv.setAppointmentType(null);
+    appointmentTypeProvider.setAppointmentCategoryId('');
   }
 }

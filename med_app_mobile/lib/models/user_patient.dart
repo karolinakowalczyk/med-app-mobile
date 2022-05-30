@@ -2,7 +2,7 @@ class UserPatient {
   String? id;
   final String name;
   final String email;
-  final String phone;
+  String phone;
   final bool google;
 
   UserPatient({
@@ -12,6 +12,10 @@ class UserPatient {
     required this.phone,
     required this.google,
   });
+
+  void setPhoneNumber(String number) {
+    phone = number;
+  }
 
   factory UserPatient.fromJSON(String id, dynamic json, bool ifGoogle) {
     return UserPatient(

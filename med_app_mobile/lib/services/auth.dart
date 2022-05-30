@@ -1,12 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:med_app_mobile/models/user_patient.dart';
+import 'package:med_app_mobile/providers/main_page_provider.dart';
+import 'package:provider/provider.dart';
 
-class AuthServices {
+class AuthServices extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   UserPatient? _user;
+  bool _isPhoneNumberDefined = false;
+
+  bool get isPhoneNumberDefined => _isPhoneNumberDefined;
+
+  void setIsPhoneNumberDefined(bool isDefined) {
+    _isPhoneNumberDefined = isDefined;
+    notifyListeners();
+  }
 
   Future<UserPatient?> _userFromFirebase(User? user) async {
     if (user == null) {
@@ -18,15 +29,78 @@ class AuthServices {
     if (data.exists) {
       UserPatient? loadedUser =
           UserPatient.fromJSON(user.uid, data.data(), false);
+      /*
+      if (loadedUser.phone.isEmpty) {
+        String? phoneNumber = await showDialog<String>(
+          context: context!,
+          builder: (context) {
+            TextEditingController _textEditingController =
+                TextEditingController(text: '');
+            return TextFieldAlertDialogHelper().mainAlertDialog(
+              context: context,
+              title: 'Please enter phone number for better contact!',
+              actions: [
+                TextButton(
+                  child: const Text('Submit'),
+                  onPressed: () {
+                    Navigator.of(context).pop(_textEditingController.text);
+                  },
+                ),
+              ],
+              labelText: 'Phone number',
+              hintText: 'Enter phone number',
+              textFieldController: _textEditingController,
+            );
+          },
+        );
+        await userDoc.update({'phone': phoneNumber});
+        loadedUser.setPhoneNumber(phoneNumber.toString());
+      }
+*/
+      if (loadedUser.phone.isEmpty) {
+        // Provider.of<MainPageProvider>(context!, listen: false)
+        //     .setIfPhoneNumberProvided(false);
+        setIsPhoneNumberDefined(false);
+      } else {
+        // Provider.of<MainPageProvider>(context!, listen: false)
+        //     .setIfPhoneNumberProvided(true);
+        setIsPhoneNumberDefined(true);
+      }
       setUser(loadedUser);
       return loadedUser;
     } else if (_auth.currentUser!.providerData[0].providerId == 'google.com') {
       User? currentUser = _auth.currentUser;
+      setIsPhoneNumberDefined(false);
+      /*
+      String? phoneNumber = await showDialog<String>(
+        context: context!,
+        builder: (context) {
+          TextEditingController _textEditingController =
+              TextEditingController(text: '');
+          return TextFieldAlertDialogHelper().mainAlertDialog(
+            context: context,
+            title: 'Please enter phone number for better contact!',
+            actions: [
+              TextButton(
+                child: const Text('Submit'),
+                onPressed: () {
+                  Navigator.of(context).pop(_textEditingController.text);
+                },
+              ),
+            ],
+            labelText: 'Phone number',
+            hintText: 'Enter phone number',
+            textFieldController: _textEditingController,
+          );
+        },
+      );
+*/
       UserPatient? loadedUser = UserPatient(
         id: currentUser!.uid,
         name: currentUser.displayName ?? '',
         email: currentUser.email ?? '',
-        phone: currentUser.phoneNumber ?? '123456789',
+        // phone: phoneNumber ?? '',
+        phone: currentUser.phoneNumber ?? '',
         google: true,
       );
       await _firestore
@@ -36,6 +110,7 @@ class AuthServices {
       setUser(loadedUser);
       return loadedUser;
     } else {
+      setIsPhoneNumberDefined(true);
       setUser(null);
       return null;
     }
@@ -50,6 +125,12 @@ class AuthServices {
 
   void setUser(UserPatient? user) {
     _user = user;
+  }
+
+  Future<void> updatePhoneNumber(String phoneNumber) async {
+    DocumentReference userDoc =
+        _firestore.collection('patients').doc(_user!.id);
+    await userDoc.update({'phone': phoneNumber});
   }
 
   Future<void> signIn(String email, String password) async {
@@ -123,7 +204,8 @@ class AuthServices {
       if (_auth.currentUser!.providerData[0].providerId == 'google.com') {
         await googleSignOut();
       }
-      return await _auth.signOut();
+      await _auth.signOut();
+      setUser(null);
     } catch (e) {
       throw e.toString();
     }

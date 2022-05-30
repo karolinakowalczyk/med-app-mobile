@@ -7,6 +7,20 @@ class AppointmentHourProvider extends ChangeNotifier {
   var startingHour = const Duration(hours: 8);
   final List<Duration> _baseAvailableAppointments = [];
   bool _isNFZ = false;
+  String? _oldDateForEditing;
+  String? _appointmentIdForEditing;
+
+  String? get oldDateForEditing => _oldDateForEditing;
+
+  void setOldDateForEditing(String? date) {
+    _oldDateForEditing = date;
+  }
+
+  String? get appointmentIdForEditing => _appointmentIdForEditing;
+
+  void setAppointmentIdForEditing(String id) {
+    _appointmentIdForEditing = id;
+  }
 
   bool get isNFZ => _isNFZ;
 
@@ -68,11 +82,11 @@ class AppointmentHourProvider extends ChangeNotifier {
     _date = newDate;
   }
 
-  Stream<List<Duration>> availableAppointments(
-    String day,
-    String doctorId,
-    Duration appLen,
-  ) {
+  Stream<List<Duration>> availableAppointments({
+    required String day,
+    required String doctorId,
+    required Duration appLen,
+  }) {
     _availableAppointments.clear();
     _availableAppointments.addAll(_baseAvailableAppointments);
     return _firestore
@@ -84,26 +98,42 @@ class AppointmentHourProvider extends ChangeNotifier {
         .asyncMap(
       (appointments) {
         List<Duration> toRemove = [];
+
+        if (DateFormat('dd-MM-yyyy')
+                .parse(DateFormat('dd-MM-yyyy').format(DateTime.now()))
+                .compareTo(DateFormat('dd-MM-yyyy').parse(day)) ==
+            0) {
+          DateTime todayDate = DateFormat('dd-MM-yyyy')
+              .parse(DateFormat('dd-MM-yyyy').format(DateTime.now()));
+          _availableAppointments.removeWhere((element) {
+            if (todayDate.add(element).isBefore(DateTime.now())) {
+              return true;
+            }
+            return false;
+          });
+        }
         for (var app in appointments.docs) {
-          final len = int.parse(app.data()['length']);
-          Duration length = Duration(minutes: len);
+          if (app.id != _appointmentIdForEditing) {
+            final len = int.parse(app.data()['length']);
+            Duration length = Duration(minutes: len);
 
-          Duration appStart = stringToDuration(app.data()['hour']);
+            Duration appStart = stringToDuration(app.data()['hour']);
 
-          _availableAppointments.removeWhere((element) =>
-              element.compareTo(appStart) >= 0 &&
-              element.compareTo(appStart + length) < 0);
+            _availableAppointments.removeWhere((element) =>
+                element.compareTo(appStart) >= 0 &&
+                element.compareTo(appStart + length) < 0);
 
-          for (var app in _availableAppointments) {
-            var num = appLen.inMinutes ~/ 15 - 1;
-            var mult = 1;
-            for (var multi = 1; multi <= num; multi++) {
-              if (!_availableAppointments
-                  .contains(app + Duration(minutes: mult * 15))) {
-                toRemove.add(app);
-                break;
+            for (var app in _availableAppointments) {
+              var num = appLen.inMinutes ~/ 15 - 1;
+              var mult = 1;
+              for (var multi = 1; multi <= num; multi++) {
+                if (!_availableAppointments
+                    .contains(app + Duration(minutes: mult * 15))) {
+                  toRemove.add(app);
+                  break;
+                }
+                mult++;
               }
-              mult++;
             }
           }
         }
@@ -130,22 +160,38 @@ class AppointmentHourProvider extends ChangeNotifier {
     required Duration hour,
     required int length,
     required Duration endHour,
+    double? price,
   }) async {
+    Map<String, dynamic> app = price != null
+        ? {
+            'title': title,
+            'doctor': doctorId,
+            'doctorName': doctorName,
+            'hour': formateHour(hour),
+            'endHour': formateHour(endHour),
+            'length': length.toString(),
+            'date': date,
+            'patient': patientId,
+            'patientName': patientName,
+            'price': price
+          }
+        : {
+            'title': title,
+            'doctor': doctorId,
+            'doctorName': doctorName,
+            'hour': formateHour(hour),
+            'endHour': formateHour(endHour),
+            'length': length.toString(),
+            'date': date,
+            'patient': patientId,
+            'patientName': patientName,
+          };
+
     final result = await _firestore
         .collection('appointments')
         .doc(date)
         .collection('appointments')
-        .add({
-      'title': title,
-      'doctor': doctorId,
-      'doctorName': doctorName,
-      'hour': formateHour(hour),
-      'endHour': formateHour(endHour),
-      'length': length.toString(),
-      'date': date,
-      'patient': patientId,
-      'patientName': patientName,
-    });
+        .add(app);
     await _firestore
         .collection('patients')
         .doc(patientId)
@@ -153,6 +199,77 @@ class AppointmentHourProvider extends ChangeNotifier {
         .add({
       'date': date,
       'id': result.id,
+    });
+  }
+
+  Future<void> updateAppointment({
+    required String patientId,
+    required String patientName,
+    required String title,
+    required String doctorId,
+    required String doctorName,
+    required String date,
+    required Duration hour,
+    required int length,
+    required Duration endHour,
+    double? price,
+  }) async {
+    Map<String, dynamic> app = price != null
+        ? {
+            'title': title,
+            'doctor': doctorId,
+            'doctorName': doctorName,
+            'hour': formateHour(hour),
+            'endHour': formateHour(endHour),
+            'length': length.toString(),
+            'date': date,
+            'patient': patientId,
+            'patientName': patientName,
+            'price': price
+          }
+        : {
+            'title': title,
+            'doctor': doctorId,
+            'doctorName': doctorName,
+            'hour': formateHour(hour),
+            'endHour': formateHour(endHour),
+            'length': length.toString(),
+            'date': date,
+            'patient': patientId,
+            'patientName': patientName,
+          };
+
+    DocumentReference oldAppointmentRef = _firestore
+        .collection('appointments')
+        .doc(_oldDateForEditing)
+        .collection('appointments')
+        .doc(_appointmentIdForEditing);
+
+    DocumentReference newAppointmentRef = _firestore
+        .collection('appointments')
+        .doc(date)
+        .collection('appointments')
+        .doc(_appointmentIdForEditing);
+    final appointmentsInPatient = await _firestore
+        .collection('patients')
+        .doc(patientId)
+        .collection('appointments')
+        .get();
+    final appointmentInPatient = appointmentsInPatient.docs.firstWhere(
+      (element) => element.data()['id'] == _appointmentIdForEditing,
+    );
+
+    DocumentReference patientAppointmentRef = _firestore
+        .collection('patients')
+        .doc(patientId)
+        .collection('appointments')
+        .doc(appointmentInPatient.id);
+
+    await oldAppointmentRef.delete();
+    await newAppointmentRef.set(app);
+    await patientAppointmentRef.set({
+      'date': date,
+      'id': _appointmentIdForEditing,
     });
   }
 }

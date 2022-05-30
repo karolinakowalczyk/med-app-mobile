@@ -7,26 +7,31 @@ import 'package:med_app_mobile/providers/appointment_type_provider.dart';
 import 'package:provider/provider.dart';
 
 class ChooseDatePage extends StatefulWidget {
-  const ChooseDatePage({Key? key}) : super(key: key);
+  final double remainHeigth;
+  const ChooseDatePage({
+    required this.remainHeigth,
+    Key? key,
+  }) : super(key: key);
 
   @override
   State<ChooseDatePage> createState() => _ChooseDatePageState();
 }
 
 class _ChooseDatePageState extends State<ChooseDatePage> {
+  bool choosen = false;
+  late bool nfz;
   late DateTime currentDate = DateTime.now();
   late String formattedDate = DateFormat('dd-MM-yyy').format(currentDate);
 
   Future<String> _selectDate(BuildContext context, bool nfz) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate:
-          !nfz ? currentDate : currentDate.add(const Duration(days: 178)),
+      initialDate: currentDate,
       firstDate:
-          !nfz ? DateTime.now() : DateTime.now().add(const Duration(days: 178)),
-      lastDate: !nfz
-          ? DateTime.now().add(const Duration(days: 183))
-          : DateTime.now().add(const Duration(days: 365)),
+          nfz ? DateTime.now().add(const Duration(days: 178)) : DateTime.now(),
+      lastDate: nfz
+          ? DateTime.now().add(const Duration(days: 365))
+          : DateTime.now().add(const Duration(days: 183)),
     );
     if (pickedDate != null && pickedDate != currentDate) {
       setState(() {
@@ -37,22 +42,12 @@ class _ChooseDatePageState extends State<ChooseDatePage> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    // final prov = Provider.of<AppointmentHourProvider>(context, listen: false);
-    // prov.setDate(
-    //   formattedDate,
-    // );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     final appointmentHourProv =
         Provider.of<AppointmentHourProvider>(context, listen: false);
-    // final appointmentTypeProv =
-    //     Provider.of<AppointmentTypeProvider>(context, listen: false);
-
+    nfz = appointmentHourProv.isNFZ;
+    const remainingSpace = 200;
+    final contentSpace = widget.remainHeigth - remainingSpace;
     return Consumer<AppointmentDoctorProvider>(
       builder: (_, appDoctorvalue, __) {
         final selectedDoctor = appDoctorvalue.doctor ??
@@ -65,11 +60,11 @@ class _ChooseDatePageState extends State<ChooseDatePage> {
             );
         return StreamBuilder<List<Duration>>(
             stream: appointmentHourProv.availableAppointments(
-              formattedDate,
-              appDoctorvalue.doctor == null
+              day: formattedDate,
+              doctorId: appDoctorvalue.doctor == null
                   ? 'Random'
                   : appDoctorvalue.doctor!.id,
-              Duration(
+              appLen: Duration(
                 minutes: appDoctorvalue.appointmentType == null
                     ? 15
                     : appDoctorvalue.appointmentType!.estimatedTime,
@@ -78,14 +73,64 @@ class _ChooseDatePageState extends State<ChooseDatePage> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return SizedBox(
-                  height: size.height * 0.65,
+                  height: contentSpace,
                   child: const Center(
                     child: CircularProgressIndicator(),
                   ),
                 );
               }
+              final hourProvider =
+                  Provider.of<AppointmentHourProvider>(context, listen: false);
+              if (hourProvider.date != '') {
+                final appointmentTypeProv =
+                    Provider.of<AppointmentTypeProvider>(context);
+                if (appointmentTypeProv.editing) {
+                  if (hourProvider.isNFZ &&
+                      (hourProvider.isNFZ != appointmentTypeProv.prevNfz ||
+                          appointmentTypeProv.prevAppointment!.doctor !=
+                              appDoctorvalue.doctor!.name)) {
+                    currentDate = DateTime.now().add(const Duration(days: 178));
+                  } else if (!hourProvider.isNFZ &&
+                      (hourProvider.isNFZ != appointmentTypeProv.prevNfz ||
+                          appointmentTypeProv.prevAppointment!.doctor !=
+                              appDoctorvalue.doctor!.name)) {
+                    currentDate = DateTime.now();
+                  } else if (hourProvider.isNFZ ==
+                      appointmentTypeProv.prevNfz) {
+                    if (hourProvider.oldDateForEditing == null) {
+                      if (hourProvider.isNFZ) {
+                        currentDate =
+                            DateTime.now().add(const Duration(days: 178));
+                      } else {
+                        currentDate = DateTime.now();
+                      }
+                    } else {
+                      currentDate = DateFormat('dd-MM-yyyy')
+                          .parse(hourProvider.oldDateForEditing!);
+                    }
+                  }
+                } else {
+                  if (hourProvider.isNFZ) {
+                    currentDate = DateTime.now().add(const Duration(days: 178));
+                  } else {
+                    currentDate = DateTime.now();
+                  }
+                }
+                formattedDate = DateFormat('dd-MM-yyy').format(currentDate);
+                hourProvider.setDate(formattedDate);
+                choosen = true;
+              } else if (hourProvider.date == '') {
+                if (hourProvider.isNFZ && !choosen) {
+                  currentDate = DateTime.now().add(const Duration(days: 178));
+                } else if (!choosen) {
+                  currentDate = DateTime.now();
+                }
+                formattedDate = DateFormat('dd-MM-yyy').format(currentDate);
+                hourProvider.setDate(formattedDate);
+                choosen = true;
+              }
               return SizedBox(
-                height: size.height * 0.65,
+                height: contentSpace,
                 child: Column(
                   children: <Widget>[
                     Card(
@@ -140,20 +185,6 @@ class _ChooseDatePageState extends State<ChooseDatePage> {
                     */
                     Consumer<AppointmentHourProvider>(
                       builder: (context, value, child) {
-                        if (value.isNFZ) {
-                          currentDate =
-                              DateTime.now().add(const Duration(days: 178));
-                          formattedDate =
-                              DateFormat('dd-MM-yyy').format(currentDate);
-
-                          value.setDate(formattedDate);
-                        } else {
-                          currentDate = DateTime.now();
-                          formattedDate =
-                              DateFormat('dd-MM-yyy').format(currentDate);
-
-                          value.setDate(formattedDate);
-                        }
                         return Card(
                           elevation: 5,
                           shape: RoundedRectangleBorder(
@@ -175,14 +206,22 @@ class _ChooseDatePageState extends State<ChooseDatePage> {
                                       horizontal: 12,
                                       vertical: 12,
                                     ),
-                                    crossAxisCount: 4,
+                                    crossAxisCount: appointmentHourProv
+                                            .getAppointments()
+                                            .isEmpty
+                                        ? 1
+                                        : 4,
                                     crossAxisSpacing: 20,
                                     mainAxisSpacing: 20,
                                     children: [
-                                      ...appointmentHourProv
+                                      if (appointmentHourProv
                                           .getAppointments()
-                                          .map((element) =>
-                                              Consumer<AppointmentHourProvider>(
+                                          .isNotEmpty)
+                                        ...appointmentHourProv
+                                            .getAppointments()
+                                            .map(
+                                              (element) => Consumer<
+                                                  AppointmentHourProvider>(
                                                 builder: (_, value, __) =>
                                                     InkWell(
                                                   borderRadius:
@@ -259,7 +298,15 @@ class _ChooseDatePageState extends State<ChooseDatePage> {
                                                     ),
                                                   ),
                                                 ),
-                                              )),
+                                              ),
+                                            ),
+                                      if (appointmentHourProv
+                                          .getAppointments()
+                                          .isEmpty)
+                                        const Center(
+                                          child: Text('No available hours',
+                                              textAlign: TextAlign.center),
+                                        )
                                     ],
                                   ),
                                 ),

@@ -18,8 +18,18 @@ class DoctorDataProvider extends ChangeNotifier {
   List<AppointmentCategory> getAppointmentCategories() =>
       _appointmentCategories;
 
-  Stream<List<AppointmentCategory>> get appointmentCategories =>
-      FirebaseFirestore.instance
+  Future<void> loadAppCategories() async {
+    final appointmentsTypesDocs =
+        await _firestore.collection('appointmentTypes').get();
+    _appointmentCategories.clear();
+    for (var appCat in appointmentsTypesDocs.docs) {
+      _appointmentCategories.add(
+        AppointmentCategory(id: appCat.id, name: appCat['name']),
+      );
+    }
+  }
+
+  Stream<List<AppointmentCategory>> get appointmentCategories => _firestore
           .collection('appointmentTypes')
           .snapshots()
           .asyncMap((appointmentCat) {
@@ -31,6 +41,34 @@ class DoctorDataProvider extends ChangeNotifier {
         }
         return _appointmentCategories;
       });
+
+  Future<void> loadDoctors() async {
+    final doctorsDocs = await _firestore.collection('doctors').get();
+    _doctors.clear();
+    for (var doct in doctorsDocs.docs) {
+      List<AppointmentType> appTypesList = await _firestore
+          .collection('doctors')
+          .doc(doct.id)
+          .collection('appointmentTypes')
+          .get()
+          .then((appTypesDocs) {
+        List<AppointmentType> loadedAppTypesList = [];
+        for (var appType in appTypesDocs.docs) {
+          loadedAppTypesList.add(
+            AppointmentType.fromJson(appType.data()),
+          );
+        }
+        return loadedAppTypesList;
+      });
+      _doctors.add(
+        Doctor.fromJSON(
+          doct.id,
+          doct.data(),
+          appTypesList,
+        ),
+      );
+    }
+  }
 
   Stream<List<Doctor>> get doctors =>
       _firestore.collection('doctors').snapshots().asyncMap((doctors) async {
@@ -60,6 +98,20 @@ class DoctorDataProvider extends ChangeNotifier {
         }
         return _doctors;
       });
+
+  // Future<void> loadAppointmentTypes() async {
+  //   final appointmentTypesDocs =
+  //       await _firestore.collection('appointmentTypes').get();
+  //   _appointmentTypes.clear();
+  //   for (var appType in appointmentTypesDocs.docs) {
+  //     _appointmentTypes.add(
+  //       AppointmentType.fromJson(
+  //         appType.id,
+  //         appType.data(),
+  //       ),
+  //     );
+  //   }
+  // }
 
   Stream<List<AppointmentType>> get appointmentTypes => _firestore
           .collection('appointmentTypes')

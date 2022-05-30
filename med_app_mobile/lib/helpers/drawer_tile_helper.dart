@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:med_app_mobile/pages/auth_wrapper.dart';
+import 'package:med_app_mobile/providers/main_page_provider.dart';
+import 'package:provider/provider.dart';
 
 // Ta klasa zawiera wzór elementu ListTile do Drawer'a.
 class DrawerTileHelper {
@@ -28,6 +29,8 @@ class DrawerTileHelper {
         ),
       ),
       onTap: () async {
+        Provider.of<MainPageProvider>(context, listen: false)
+            .clearSettings(context);
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (BuildContext context) {
             return page();
