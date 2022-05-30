@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:med_app_mobile/helpers/alert_window_helper.dart';
+import 'package:med_app_mobile/models/appointment_model.dart';
 import 'package:med_app_mobile/models/user_patient.dart';
 import 'package:med_app_mobile/pages/main_page.dart';
 import 'package:med_app_mobile/providers/appointment_doctor_provider.dart';
@@ -90,11 +91,17 @@ class AppointmentResHelper {
         const Duration(minutes: 0), const Duration(minutes: 0));
     appointmentHourProv.setDate("");
     appointmentHourProv.setIsNFZ(false);
+    appointmentHourProv.setAppointmentIdForEditing('');
+    appointmentHourProv.setOldDateForEditing('');
     appointmentDoctorProv.selctDoctor(-1);
     appointmentDoctorProv.setDoctor(null);
     appointmentDoctorProv.setActiveStepIndex(0);
+    appointmentDoctorProv.setAppointmentType(null);
     appointmentTypeProvider.selectAppType(-1);
+    appointmentTypeProvider.setEditing(false);
     appointmentTypeProvider.setAppointmentCategoryId('');
+    appointmentTypeProvider.setPrevAppointment(null);
+    appointmentTypeProvider.setPrevNfz(false);
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (BuildContext context) {
         return const MainPage();
@@ -148,13 +155,17 @@ void confirm(
       const Duration(minutes: 0), const Duration(minutes: 0));
   appointmentHourProv.setDate("");
   appointmentHourProv.setIsNFZ(false);
+  appointmentHourProv.setAppointmentIdForEditing('');
+  appointmentHourProv.setOldDateForEditing('');
   appointmentDoctorProv.selctDoctor(-1);
   appointmentDoctorProv.setDoctor(null);
   appointmentDoctorProv.setActiveStepIndex(0);
+  appointmentDoctorProv.setAppointmentType(null);
   appointmentTypeProvider.selectAppType(-1);
   appointmentTypeProvider.setEditing(false);
-  appointmentDoctorProv.setAppointmentType(null);
   appointmentTypeProvider.setAppointmentCategoryId('');
+  appointmentTypeProvider.setPrevAppointment(null);
+  appointmentTypeProvider.setPrevNfz(false);
   Navigator.of(context).pushReplacement(
     MaterialPageRoute(builder: (BuildContext context) {
       return const MainPage();

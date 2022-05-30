@@ -23,7 +23,11 @@ class AppointmentDoctorProvider extends ChangeNotifier {
   Doctor? get doctor => _doctor;
 
   void setDoctor(Doctor? doc) {
-    _doctor = doc;
+    if (_doctor == doc) {
+      _doctor = null;
+    } else {
+      _doctor = doc;
+    }
   }
 
   int get activeStepIndex => _activeStepIndex;

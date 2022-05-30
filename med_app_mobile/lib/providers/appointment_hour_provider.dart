@@ -9,6 +9,7 @@ class AppointmentHourProvider extends ChangeNotifier {
   bool _isNFZ = false;
   String? _oldDateForEditing;
   String? _appointmentIdForEditing;
+  bool _refresh = true;
 
   String? get oldDateForEditing => _oldDateForEditing;
 
@@ -19,7 +20,11 @@ class AppointmentHourProvider extends ChangeNotifier {
   String? get appointmentIdForEditing => _appointmentIdForEditing;
 
   void setAppointmentIdForEditing(String id) {
-    _appointmentIdForEditing = id;
+    if (_appointmentIdForEditing == id) {
+      _appointmentIdForEditing = null;
+    } else {
+      _appointmentIdForEditing = id;
+    }
   }
 
   bool get isNFZ => _isNFZ;
@@ -27,6 +32,12 @@ class AppointmentHourProvider extends ChangeNotifier {
   void setIsNFZ(bool isNfz) {
     _isNFZ = isNfz;
     notifyListeners();
+  }
+
+  bool get refresh => _refresh;
+
+  void setRefresh(bool refresh) {
+    _refresh = refresh;
   }
 
   AppointmentHourProvider() {

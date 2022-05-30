@@ -21,6 +21,7 @@ class AppointmentTypeProvider extends ChangeNotifier {
 
   void setAppointmentCategoryId(String appTypeId) {
     _appointmentTypeId = appTypeId;
+    notifyListeners();
   }
 
   void selectAppType(int i) {
@@ -41,7 +42,7 @@ class AppointmentTypeProvider extends ChangeNotifier {
     _prevNfz = nfz;
   }
 
-  void setPrevAppointment(Appointment app) {
+  void setPrevAppointment(Appointment? app) {
     _prevAppointment = app;
   }
 }

@@ -192,6 +192,7 @@ class MainPageProvider extends ChangeNotifier {
     appointmentHourProv.setIsNFZ(appointment.price != null ? false : true);
     appointmentHourProv.setOldDateForEditing(appointment.date);
     appointmentHourProv.setAppointmentIdForEditing(appointment.id);
+    appointmentHourProv.setRefresh(true);
 
     final Doctor doctor = doctorDateProv
         .getDoctors()

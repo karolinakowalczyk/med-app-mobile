@@ -107,10 +107,16 @@ class _ChooseDoctorPageState extends State<ChooseDoctorPage> {
                       splashColor: Colors.blue,
                       onTap: () {
                         if (appTypeProv.prevAppointment != null) {
+                          final String docNameCompar;
+                          if (value.doctor != null) {
+                            docNameCompar = value.doctor!.name;
+                          } else {
+                            docNameCompar = '';
+                          }
                           if (appTypeProv.prevAppointment!.doctor ==
                                   _doctors[index].name &&
                               appTypeProv.prevAppointment!.doctor !=
-                                  value.doctor!.name &&
+                                  docNameCompar &&
                               _appointmentHourProv.isNFZ !=
                                   (appTypeProv.prevAppointment!.price !=
                                       null) &&
@@ -130,12 +136,22 @@ class _ChooseDoctorPageState extends State<ChooseDoctorPage> {
                                 const Duration(minutes: 0),
                                 const Duration(minutes: 0));
                           }
-                          value.selctDoctor(index);
-                          value.setDoctor(_doctors[index]);
-                          value.setAppointmentType(
-                            appointmentType,
-                          );
                         }
+                        /*
+                        else {
+                          if (index != value.selectedDoctor) {
+                            _appointmentHourProv.selctHour(
+                                const Duration(minutes: 0),
+                                const Duration(minutes: 0));
+                          }
+                        }
+*/
+                        value.setDoctor(_doctors[index]);
+                        value.setAppointmentType(
+                          appointmentType,
+                        );
+                        _appointmentHourProv.setRefresh(true);
+                        value.selctDoctor(index);
                       },
                       child: Container(
                         margin: EdgeInsets.zero,

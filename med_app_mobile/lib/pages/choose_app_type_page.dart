@@ -38,6 +38,9 @@ class _ChooseAppTypePageState extends State<ChooseAppTypePage> {
     final typeProv =
         Provider.of<AppointmentTypeProvider>(context, listen: false);
 
+    final appointmentDoctorProv =
+        Provider.of<AppointmentDoctorProvider>(context, listen: false);
+
     nfz = appointmentHourProv.isNFZ;
 
     const remainingSpace = 200;
@@ -65,7 +68,7 @@ class _ChooseAppTypePageState extends State<ChooseAppTypePage> {
                     value: nfz,
                     onChanged: (value) {
                       // ignore: unnecessary_null_comparison
-                      if (typeProv.prevNfz != null) {
+                      if (typeProv.prevAppointment != null) {
                         if (appointmentHourProv.isNFZ !=
                             (typeProv.prevAppointment!.price != null)) {
                           appointmentHourProv.selctHour(
@@ -74,18 +77,49 @@ class _ChooseAppTypePageState extends State<ChooseAppTypePage> {
                         } else {
                           appointmentHourProv.setOldDateForEditing(
                               typeProv.prevAppointment!.date);
-                          appointmentHourProv.selctHour(
-                            appointmentHourProv.stringToDuration(
-                                typeProv.prevAppointment!.hour),
-                            appointmentHourProv.stringToDuration(
-                                typeProv.prevAppointment!.endHour),
-                          );
+                          final String doctComp;
+                          if (appointmentDoctorProv.doctor != null) {
+                            doctComp = appointmentDoctorProv.doctor!.name;
+                          } else {
+                            doctComp = '';
+                          }
+                          if (typeProv.prevAppointment!.doctor != doctComp) {
+                            final Doctor doctor = docotrsDataProv
+                                .getDoctors()
+                                .firstWhere((element) =>
+                                    element.name ==
+                                    typeProv.prevAppointment!.doctor);
+
+                            final int doctorIndex = docotrsDataProv
+                                .getDoctors()
+                                .where((doctor) => doctor.appointmentTypes
+                                    .where((app) =>
+                                        app.id == typeProv.appointmentTypeId)
+                                    .toList()
+                                    .isNotEmpty)
+                                .toList()
+                                .indexOf(doctor);
+                            appointmentDoctorProv.setDoctor(doctor);
+                            appointmentDoctorProv.selctDoctor(doctorIndex);
+                          }
+                          if (appointmentHourProv.selectedHour.compareTo(
+                                  appointmentHourProv.stringToDuration(
+                                      typeProv.prevAppointment!.hour)) !=
+                              0) {
+                            appointmentHourProv.selctHour(
+                              appointmentHourProv.stringToDuration(
+                                  typeProv.prevAppointment!.hour),
+                              appointmentHourProv.stringToDuration(
+                                  typeProv.prevAppointment!.endHour),
+                            );
+                          }
                         }
-                        appointmentHourProv.setIsNFZ(value);
-                        setState(() {
-                          nfz = value;
-                        });
                       }
+                      appointmentHourProv.setIsNFZ(value);
+                      setState(() {
+                        nfz = value;
+                      });
+                      appointmentHourProv.setRefresh(true);
                     },
                     activeColor: Colors.blue,
                   ),
@@ -128,15 +162,13 @@ class _ChooseAppTypePageState extends State<ChooseAppTypePage> {
                           final doctorProv =
                               Provider.of<AppointmentDoctorProvider>(context,
                                   listen: false);
-                          doctorProv.selctDoctor(-1);
-                          value.selectAppType(index);
-                          value.setAppointmentCategoryId(
-                              _appCategories[index].id);
+
                           if (value.prevAppointment != null) {
                             if (value.prevAppointment!.title ==
                                     _appCategories[index].name &&
-                                value.prevAppointment!.title !=
-                                    value.appointmentTypeId &&
+                                value.selectedType != index &&
+                                // value.prevAppointment!.title !=
+                                //     value.appointmentTypeId &&
                                 appointmentHourProv.isNFZ !=
                                     (typeProv.prevAppointment!.price != null)) {
                               appointmentHourProv.setOldDateForEditing(
@@ -152,6 +184,7 @@ class _ChooseAppTypePageState extends State<ChooseAppTypePage> {
                                   .firstWhere((element) =>
                                       element.name ==
                                       value.prevAppointment!.doctor);
+
                               final int doctorIndex = docotrsDataProv
                                   .getDoctors()
                                   .where((doctor) => doctor.appointmentTypes
@@ -168,8 +201,19 @@ class _ChooseAppTypePageState extends State<ChooseAppTypePage> {
                               appointmentHourProv.selctHour(
                                   const Duration(minutes: 0),
                                   const Duration(minutes: 0));
+                              doctorProv.setDoctor(null);
+                              doctorProv.selctDoctor(-1);
+                            }
+                          } else {
+                            if (index != value.selectedType) {
+                              doctorProv.selctDoctor(-1);
                             }
                           }
+
+                          value.setAppointmentCategoryId(
+                              _appCategories[index].id);
+                          appointmentHourProv.setRefresh(true);
+                          value.selectAppType(index);
                         },
                         child: Container(
                           margin: EdgeInsets.zero,
