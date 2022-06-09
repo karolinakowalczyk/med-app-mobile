@@ -85,6 +85,7 @@ class DoctorDataProvider extends ChangeNotifier {
               loadedAppTypesList.add(
                 AppointmentType.fromJson(appType.data()),
               );
+              print('asd');
             }
             return loadedAppTypesList;
           });

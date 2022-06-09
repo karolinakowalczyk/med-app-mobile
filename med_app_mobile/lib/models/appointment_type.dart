@@ -1,3 +1,5 @@
+import 'package:validators/validators.dart';
+
 class AppointmentCategory {
   final String id;
   final String name;
@@ -27,8 +29,12 @@ class AppointmentType {
       name: json['name'],
       estimatedTime: json['estimatedTime'].runtimeType == int
           ? json['estimatedTime']
-          : int.parse(json['estimatedTime'].toString()),
-      cost: double.parse(json['price'].toString()),
+          : isNumeric(json['estimatedTime'].toString())
+              ? int.parse(json['estimatedTime'].toString())
+              : 15,
+      cost: isNumeric(json['price'].toString())
+          ? double.parse(json['price'].toString())
+          : 0,
     );
     return app;
   }
