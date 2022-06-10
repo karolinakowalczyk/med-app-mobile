@@ -55,9 +55,10 @@ class DoctorDataProvider extends ChangeNotifier {
         List<AppointmentType> loadedAppTypesList = [];
         for (var appType in appTypesDocs.docs) {
           loadedAppTypesList.add(
-            AppointmentType.fromJson(appType.data()),
+            AppointmentType.fromJson(appType.id, appType.data()),
           );
         }
+
         return loadedAppTypesList;
       });
       _doctors.add(
@@ -83,9 +84,8 @@ class DoctorDataProvider extends ChangeNotifier {
             List<AppointmentType> loadedAppTypesList = [];
             for (var appType in appTypesDocs.docs) {
               loadedAppTypesList.add(
-                AppointmentType.fromJson(appType.data()),
+                AppointmentType.fromJson(appType.id, appType.data()),
               );
-              print('asd');
             }
             return loadedAppTypesList;
           });
@@ -122,6 +122,7 @@ class DoctorDataProvider extends ChangeNotifier {
         for (var appType in appointmentTypes.docs) {
           _appointmentTypes.add(
             AppointmentType.fromJson(
+              appType.id,
               appType.data(),
             ),
           );

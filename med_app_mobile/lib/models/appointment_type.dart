@@ -23,10 +23,10 @@ class AppointmentType {
     required this.cost,
   });
 
-  factory AppointmentType.fromJson(dynamic json) {
+  factory AppointmentType.fromJson(String id, dynamic json) {
     final AppointmentType app = AppointmentType(
-      id: json['id'],
-      name: json['name'],
+      id: json['id'] ?? id,
+      name: json['name'] ?? '',
       estimatedTime: json['estimatedTime'].runtimeType == int
           ? json['estimatedTime']
           : isNumeric(json['estimatedTime'].toString())

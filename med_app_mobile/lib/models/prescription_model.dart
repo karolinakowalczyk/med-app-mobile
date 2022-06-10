@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 class Medicine {
@@ -29,11 +30,32 @@ class Prescription {
 
   factory Prescription.fromJSON(String id, dynamic json, String doctor) {
     List<Medicine> medicines = [];
+    String name;
+    String desc;
 
     for (var med in json['medicines'] as List) {
-      medicines.add(Medicine(
-          name: med['medicine'] ?? '',
-          description: med['recommendations'] ?? ''));
+      if (med['medicine'] == null) {
+        if (med['name'] == null) {
+          name = "";
+        } else {
+          name = med['name'];
+        }
+      } else {
+        name = med['medicine'];
+      }
+      if (med['recommendations'] == null) {
+        if (med['description'] == null) {
+          desc = "";
+        } else {
+          desc = med['description'];
+        }
+      } else {
+        desc = med['recommendations'];
+      }
+
+      medicines.add(
+        Medicine(name: name, description: desc),
+      );
     }
     DateTime dat = DateFormat('dd-MM-yyy').parse(json['date']);
     return Prescription(
